@@ -1,0 +1,228 @@
+@name Allahu Akbar
+@inputs 
+@outputs 
+@persist Model:string Speed Holo:entity 
+@persist Target:entity BombName:string NumBombs Chasing
+@persist ChaseAll StartSpeed SoundIter ChaseSpeedIncrease
+@persist SpeedIncrease SpookySounds:array ChasingIter
+@persist [ExplodeSound,RunningSound]:string
+
+if(first())
+{
+    Model = "models/gman_high.mdl"
+    BombName = "m9k_ammo_rockets"
+    
+    ExplodeSound = "http://puu.sh/pdaPL/0179aeeefd.mp3"
+    RunningSound = "http://puu.sh/pdb8f/599badb8c1.mp3"
+    
+    Speed = 30
+    NumBombs = 1
+    
+    ChaseAll = 1             # Should it continue after hitting the first target?
+    
+    ExcludeOwner = 1
+    
+    ChaseSpeedIncrease = 100 # How many seconds*10 until the speed starts increasing
+    SpeedIncrease = 0.25      # How much will the speed increase per iteration?
+    
+    # Create the Gman Holo
+    holoCreate(1)
+    holoModel(1, Model)
+    
+    # Create the sound holos
+    holoCreate(2)
+    holoAlpha(2, 0)
+    holoCreate(3)
+    holoAlpha(3, 0)
+    holoCreate(4)
+    holoAlpha(4, 0)
+    holoCreate(5)
+    holoAlpha(5, 0)
+    
+    # Functions
+    function entity newTarget()
+    {
+        local Rand = players()[randint(1, players():count()), entity]
+        print("New Player: "+Rand:name())
+        return Rand
+    }
+    
+    function vector randSpawnPoint(T:entity)
+    {
+        local Min = T:pos() - vec(1000, 1000, 0)
+        local Max = T:pos() + vec(1000, 1000, 0)
+        local Rand = randvec(Min, Max)
+        return Rand
+    }
+    
+    SpookySounds = array("npc/advisor/advisor_scream.wav",
+                         "npc/advisor/advisor_scream.wav",
+                         "npc/advisor/advisor_scream.wav",
+                         "npc/advisor/advisor_scream.wav",
+                         "npc/advisor/advisor_speak01.wav",
+                         "npc/advisor/advisorscreenvx01.wav",
+                         "npc/advisor/advisorscreenvx02.wav",
+                         "npc/advisor/advisorscreenvx03.wav",
+                         "npc/advisor/advisorscreenvx04.wav",
+                         "npc/advisor/advisorscreenvx05.wav",
+                         "npc/advisor/advisorscreenvx06.wav",
+                         "npc/advisor/advisorscreenvx07.wav",
+                         "npc/advisor/advisorscreenvx08.wav",
+                         "npc/stalker/stalker_alert2b.wav",
+                         "npc/stalker/stalker_alert3b.wav",
+                         "npc/stalker/stalker_die2.wav",
+                         "npc/stalker/stalker_scream2.wav",
+                         "npc/stalker/stalker_scream3.wav",
+                         "npc/stalker/stalker_scream4.wav",
+                         "npc/strider/strider_hunt3.wav",
+                         "npc/strider/strider_hunt2.wav",
+                         "npc/strider/strider_hunt1.wav",
+                         "npc/strider/striderx_alert5.wav",
+                         "npc/strider/striderx_alert4.wav",
+                         "npc/strider/striderx_alert2.wav",
+                         "npc/strider/striderx_die1.wav",
+                         "npc/vort/ol02singlechant03.wav",
+                         "npc/vort/ol02singlechant01.wav",
+                         "npc/vort/vort_pain3.wav")
+    SpookySounds = array()
+                        
+    function void spookySound()
+    {   
+        local SoundPos = Target:pos() + (Target:pos() - holoEntity(1):pos()):normalized()*30
+        holoPos(SoundIter, SoundPos)
+        holoParent(SoundIter, Target)
+        
+        local RandSound = SpookySounds[randint(1, SpookySounds:count()), string]
+        local RandPitch = random(500, 2000)
+        
+        holoEntity(SoundIter):soundPlay(SoundIter, 0, RandSound)
+        soundPitch(SoundIter, RandPitch)
+        SoundIter += 1
+
+        if(SoundIter >=5)
+        {
+            SoundIter = 2
+        }
+    }
+
+    
+    # Get the new target and spawn the gman
+    Target = newTarget()
+    #Target = findPlayerByName("Phatso")
+    holoPos(1, randSpawnPoint(Target))
+    
+    Chasing = 1
+    StartSpeed = Speed
+    
+    SoundIter = 2 # Which holo will be playing the next sound, goes from 2 - 5
+    ChasingIter = 1 # Keeps track of how many iterations it's been chasing
+    
+    streamDisable3D(1)   
+    # Doctor Freeeman...
+    Target:soundPlay(1, 0, "vo/outland_02/junction/gman_mono01.wav")
+    Target:streamStart(1, 5, RunningSound)
+    streamRadius(1, 100000)
+    streamVolume(1, 1000)
+    
+    timer("SpookySound", 100)
+  
+}
+
+if(Chasing)
+{
+    # Do the movements
+    local HoloPos = holoEntity(1):pos()
+    
+    if(HoloPos:distance(Target:pos()) < 400 &(holoEntity(1):pos():isInWorld()))
+    {
+        Target:streamStart(2, 500, ExplodeSound)
+        streamVolume(2, 1000)
+        streamRadius(2, 100000)
+        timer("StopSound", 1000)
+    }
+    
+    if(HoloPos:distance(Target:pos()) < 100 &(holoEntity(1):pos():isInWorld()))
+    {
+        #for(I=1, NumBombs)
+        #{
+         #   entSpawn(BombName):setPos(HoloPos)
+        #}
+        
+        for(I=1, 2)
+        {
+            Boom = propSpawn("models/props_c17/oildrum001_explosive.mdl", 1)
+            Boom:setPos(HoloPos)
+            Boom:propBreak()
+        }
+        
+        print("Arrived at Target")
+        
+        if(ChaseAll)
+        {
+            print("Got him")
+            streamStop(1)
+            # Get the new target and spawn the gman
+            Target = newTarget()
+            Target:streamStart(1, 5, RunningSound)
+            streamVolume(1, 1000)
+            
+            concmd("say Chasing: "+Target:name())
+            
+            holoPos(1, randSpawnPoint(Target))
+            Speed = StartSpeed
+            ChasingIter = 1
+            
+            # Doctor Freeeman...
+            Target:soundPlay(1, 0, "vo/outland_02/junction/gman_mono01.wav")
+        }
+        else
+        {
+            holoDelete(1)
+            Chasing = 0
+        }
+    }
+    
+    if(HoloPos:distance(Target:pos()) > 1000)
+    {
+        Speed = 100
+        ChasingIter = 1
+    }
+    
+    
+    local MovePos = (HoloPos - Target:pos()):normalized() 
+    holoPos(1, HoloPos - (MovePos * Speed))
+    holoAng(1,(HoloPos - Target:pos()):toAngle()-ang(0, 180, 0))
+    
+    ChasingIter += 1
+    
+    # If we've been chasing for more than 20 seconds
+    if(ChasingIter > ChaseSpeedIncrease)
+    {
+        Speed += SpeedIncrease
+        print("Increasing speed: "+Speed:toString())
+    }
+    else
+    {
+        Speed = StartSpeed
+    }
+    
+    if(clk("SpookySound"))
+    {
+        spookySound()
+        Max = 5000
+        if(Speed > StartSpeed)
+        {
+            Max = randint(500, 1000)
+        }
+        timer("SpookySound", randint(500, Max))
+    }
+    
+    if(clk("StopSound"))
+    {
+        streamStop(2)
+    }
+}
+
+
+# Some things rely on the interval, it shold stay at 100
+interval(100)

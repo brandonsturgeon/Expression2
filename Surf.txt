@@ -1,0 +1,39 @@
+@name Surf
+@inputs 
+@outputs 
+@persist O:entity Inv:number
+@trigger 
+if(first() || duped())
+{
+    O = owner()
+    Inv = 0
+    
+    # Normalize noclipping
+    if(O:inNoclip())
+    {
+        concmd("ulx noclip")
+    }
+}
+
+# If ur stuck get out of the wall stupid
+if(!O:pos():isInWorld())
+{
+    if(!O:inNoclip())
+    {
+        concmd("ulx noclip")
+        Inv = 1
+    }
+}
+else
+{
+    if (O:isOnGround()){
+        concmd("ulx noclip")
+        Inv = !Inv
+    }
+    if(Inv && !O:isOnGround()){
+        concmd("ulx noclip")
+        Inv = 0
+    }
+}
+
+interval(50)

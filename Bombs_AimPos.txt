@@ -1,0 +1,27 @@
+@name Bombs AimPos
+@persist EntName:string NumBombs Use
+
+if(first())
+{
+    EntName = "m9k_ammo_rockets"
+    NumBombs = 5
+}
+Use = owner():keyUse()
+
+if($Use == 1)
+{
+    AimPos = owner():aimPos()
+    
+    if(AimPos:isInWorld())
+    {
+        for(I=1, NumBombs)
+        {
+            entSpawn(EntName):setPos(AimPos)
+        }
+        Boom = propSpawn("models/props_c17/oildrum001_explosive.mdl", 1)
+        Boom:setPos(AimPos)
+        Boom:propBreak()
+    }
+}
+
+interval(100)

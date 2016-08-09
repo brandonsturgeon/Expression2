@@ -1,0 +1,27 @@
+@name Crossbow Show
+@persist E:entity Moved
+
+
+
+if(first())
+{
+    holoCreate(1)
+    holoColor(1, vec(255,0,0))
+    holoDisableShading(1, 1)
+    holoShadow(1,0)
+    holoVisible(1,players(), 0)
+    holoVisible(1,owner(),1)
+    
+    runOnTick(1)
+}
+
+if(findCanQuery())
+{
+    findByModel("models/crossbow_bolt.mdl")
+    findToArray()
+    Target = findClosest(owner():pos())
+
+    holoPos(1,Target:pos()+(Target:forward()*10))
+}
+
+

@@ -1,0 +1,11 @@
+@name propBreak test
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+if(first())
+{
+    P = entity():isConstrainedTo()
+    P:propBreak()
+}

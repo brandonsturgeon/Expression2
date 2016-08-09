@@ -1,0 +1,67 @@
+@name Flak -- Local Pos
+@persist EntName:string 
+@persist MinTime MaxTime XYOffset ZOffset
+
+if(first())
+{
+    EntName = "m9k_ammo_rockets"
+    
+    MinTime = 250
+    MaxTime = 1500
+    
+    XYOffset = 3000
+    ZOffset = 2000
+
+    
+    function vector randBombPos()
+    {
+        local Pos = entity():pos()
+        Min = Pos - vec(XYOffset, XYOffset, 0)
+        Max = Pos + vec(XYOffset, XYOffset, ZOffset)
+        
+        RandVec = randvec(Min, Max)
+        while(!RandVec:isInWorld())
+        {
+            print("PROBLEM")
+            RandVec = randvec(Min, Max)
+        }
+        
+        return RandVec
+    }
+
+    timer("Boom", 1)
+}
+
+if(clk("Boom"))
+{
+    Rand = randint(1, 10)
+    ShouldBoom = 0
+    if(Rand < 5)
+    {
+        ShouldBoom = 1
+    }
+    
+    if(ShouldBoom)
+    {
+        if(propCanCreate())
+        {
+            local RandPos = randBombPos()
+            entSpawn(EntName):setPos(RandPos)       
+            
+            local Boom = propSpawn("models/props_c17/oildrum001_explosive.mdl", 1)
+            Boom:setPos(RandPos)
+            Boom:propBreak()
+        }
+        
+        else
+        {
+            print("CAN'T CREATE")
+        }
+        
+    }
+    
+    local RandDelay = randint(MinTime, MaxTime)
+    timer("Boom", RandDelay)
+}
+
+interval(100)

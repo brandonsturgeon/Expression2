@@ -1,0 +1,29 @@
+@name E2 rangers
+@outputs Score
+@persist In Min:vector Max:vector ModelName:string
+
+if(first()|duped()) {
+    findIncludeModel("models/props_phx/misc/soccerball.mdl")
+    
+    In = 0
+    Min = entity():pos() - vec(25,25,0)
+    Max = entity():pos() + vec(25,25,25)
+}    
+
+if(findCanQuery())
+{
+    findInBox(Min, Max)
+    A = findToArray()
+    
+    if(A:count() > 0 &(In == 0))
+    {
+        In = 1
+        Score += 1
+    }
+    elseif(A:count() == 0)
+    {
+        In = 0
+    }
+}
+
+interval(250)

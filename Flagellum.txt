@@ -1,0 +1,53 @@
+@name Flagellum
+@persist TailLength Positions:array TailWidth TailHeight
+
+if(first())
+{
+    TailLength = 15
+    TailHeight = 5
+    TailWidth = 1
+    Positions = array()
+    
+    
+    Epos = entity():pos()
+    for(I=1, TailLength)
+    {
+        #local Dia = TailWidth - (I * (TailWidth/TailLength))
+        holoCreate(I)
+        holoModel(I, "hq_rcylinder_thin") 
+        holoScaleUnits(I, vec(TailWidth,TailWidth,TailHeight))
+        holoDisableShading(I,1)
+        holoPos(I, entity():pos()+vec(0,0,I*TailHeight))
+        Positions[I,vector] = Epos
+    }
+    
+}
+if(Positions:count() >= TailLength)
+{Positions:pop()}
+
+CurPos = entity():pos()
+Positions:insertVector(1, CurPos)
+
+for(I=Positions:count(), 1, -1)
+{
+    if(Positions[I, vector]:distance(entity():pos()) < 50)
+    {
+        Last = Positions[I, vector]
+        break
+    }
+}
+
+MaxAng = Last:distance(CurPos)*0.9
+
+Step = (Last-CurPos)/Positions:count()
+
+AngStep = MaxAng/Positions:count()
+
+for(I=1, TailLength)
+{
+    NewPos = entity():pos() + (Step*I)
+    holoPos(I, NewPos+vec(0,0,I*TailHeight))
+    holoAng(I, entity():toLocal(ang(I*AngStep,0,0)))
+}
+
+interval(1)

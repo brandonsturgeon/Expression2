@@ -1,0 +1,11 @@
+@name propManipulate test
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+if(first())
+{
+    P = entity():isConstrainedTo()
+    P:propManipulate(vec(0), ang(vec(0)), 1,1,1)
+}

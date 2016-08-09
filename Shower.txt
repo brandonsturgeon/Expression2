@@ -1,0 +1,48 @@
+@name Shower
+@persist EntName:string Interval Range Height MinesPerTick
+
+
+if(first())
+{
+    EntName = "combine_mine"
+    #EntName = "npc_grenade_frag"
+    #EntName = "models/pac/jiggle/base_jiggle_5.mdl"
+    #EntName = "item_healthkit"
+    Interval = 50
+    Range = 5000
+    Height = 2000
+    
+    MinesPerTick = 5
+    
+    function vector randPos()
+    {
+        for(I=1, 25)
+        {
+            RandHeight = randint(Height-(Height*0.5), Height+(Height*0.5))
+            Min = owner():pos()-vec(Range,Range,-RandHeight)
+            Max = owner():pos()+vec(Range,Range,RandHeight)
+            
+            Rand = randvec(Min,Max)
+            while(!Rand:isInWorld())
+            {
+                Rand = randvec(Min,Max)
+            }
+            return Rand
+        }
+    }
+}
+
+for(I=1, MinesPerTick)
+{
+    if(!perf())
+    {break}
+    
+    NewPos = randPos()
+    if(NewPos:isInWorld())
+    {
+        E = entSpawn(EntName)
+        E:setPos(randPos())
+    }
+}
+
+interval(Interval)

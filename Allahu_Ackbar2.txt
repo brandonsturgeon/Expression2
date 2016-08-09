@@ -1,0 +1,17 @@
+@name Allahu Ackbar
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+if(first())
+{
+    streamDisable3D(1)
+    
+    for(I=1, 3)
+    {
+        entity():streamStart(I, "http://puu.sh/pdb8f/599badb8c1.mp3")
+        streamVolume(I, 20)
+        streamRadius(I, 100000)
+    }
+}

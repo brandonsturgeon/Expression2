@@ -1,0 +1,280 @@
+@name Throwing Knives
+@persist [SpawnSounds, PropHitSounds, PlayerHitSounds]:array
+@persist [Props, PropsToConvert]:table
+@persist [WepType, PropModel]:string
+@persist MaxProps GhostDelay KeyAttack2
+@persist Debug Force PropMass Interval CleanupTime
+
+if (first())
+{
+    # Options    
+    PropModel = "models/weapons/w_knife_t.mdl"
+    PropModel = "models/pac/jiggle/base_jiggle_5.mdl"
+    MaxProps = 5
+    GhostDelay = 250 # How long it's a ghost in milliseconds. Default: 250
+    Debug = 0 # Do you want debug printing? Default: 0
+    Force = 5 # How hard the props fires Default: 5
+    PropMass = 3 # Mass of prop, will effect how hard it's thrown. Default: 3
+    CleanupTime = 5 # How long until thrown props are cleaned up? (In Seconds) Default: 5
+    
+    Interval = 100 # Interval of code. Default: 100
+    
+    # Dupe protection
+    if(duped())
+    {
+        hint("Nah m8",10)
+        selfDestruct()
+    }
+    
+    # Invis
+    #entity():setMaterial("")
+    #entity():setAlpha(0) 
+    
+    # Functions
+        
+    # Function used to print debug stuff while Debug == 1
+    function void debugPrint(ToPrint:string)
+    {
+        if(Debug == 1)
+        {print(ToPrint)}
+    }
+    
+    # Function used when spawning a prop to play a sound
+    function void playSpawnSound()
+    {
+        local RandKey = randint(1, SpawnSounds:count())
+        owner():soundPlay(RandKey, 0, SpawnSounds[RandKey, string])
+    }
+
+    # Main SpawnProp function
+    function entity spawnProp(SpawnPos:vector, SpawnAng:angle)
+    {
+        Prop = propSpawn(PropModel, SpawnPos, SpawnAng, 0)
+        #Prop:propNotSolid(1) -- disabled temporarily
+        Prop:setTrails(20,0,1,"trails/laser",vec(255,0,0),155)
+        Prop:setMass(PropMass)
+        
+        # If the maximum prop limit is reached, delete the first
+        if(Props:count() >= MaxProps)
+        {
+            local EntToRemove = Props[1, table]["ent", entity]
+            EntToRemove:propDelete()
+            Props:remove(1)
+        }
+        
+        local AimType = owner():aimEntity():type()
+        local AimPos = owner():aimPos()
+        
+        # If aiming at a player, target them
+        if(AimType == "player")
+        {AimPos = owner():aimEntity():pos() + vec(0,0,25)}
+        
+        # If aiming at a prop, target it
+        if(AimType == "prop_physics")
+        {AimPos = owner():aimEntity():pos()}
+            
+        local PropsStructure = table("ent" = Prop,
+                                     "status" = "flying",
+                                     "added" = curtime())
+        
+        # GhostStructures temporarily disabled
+        #local GhostStructure = table("ent" = Prop,
+        #                             "added" = curtime())
+        Props:pushTable(PropsStructure)
+        #PropsToConvert:pushTable(GhostStructure) -- Disabled temporarily
+        playSpawnSound()
+        
+        # spooky applyforce math
+        local ApplyTo = AimPos
+        local Dist = Prop:pos():distance(ApplyTo)
+        Vec =(ApplyTo-Prop:pos())*Prop:mass()*(Dist/167)
+        Prop:applyForce(Vec+$Vec*Force)
+    }
+    
+    # called when a prop hits something
+    function void entity:playHitSound(HitEnt:entity)
+    {
+        # Determine what was hit
+        if(HitEnt:type() == "player")
+        {
+            debugPrint("Hit player")
+            UseSounds = PlayerHitSounds
+        }
+        elseif(HitEnt:type() == "prop_physics" | HitEnt:isWorld())
+        {
+            debugPrint("Hit prop or world")
+            UseSounds = PropHitSounds
+        }
+        
+        # Play appropriate sounds
+        local RandKey = randint(1, UseSounds:count())
+        This:soundPlay(RandKey, 0, UseSounds[RandKey, string])
+    }
+    
+    # Sets the prop to be stopped
+    function void setStopped(K:number)
+    {
+        local Tbl = Props[K, table]:clone()
+        Tbl["status", string] = "stopped"
+        Props[K, table] = Tbl
+    }
+    
+
+        
+    
+    # Definitions #
+    
+    # Sounds
+    SpawnSounds = array("weapons/machete/machete1.wav",
+                        "weapons/machete/machete2.wav",
+                        "weapons/machete/machete3.wav")
+    PropHitSounds = array()
+    PlayerHitSounds = array()
+    
+    
+    # Init with structure examples
+    # PropsToConvert example: 
+    # table(1 = table("ent" = entity,
+    #                 "added" = curtime()))
+    PropsToConvert = table()
+    
+    # Props example:
+    # table(1 = table("ent" = entity,
+    #                 "status" = "flying"|"stopped")
+    Props = table()
+    
+    # Only search for props and players during distance checks
+    findIncludeClass("prop_physics")
+    findIncludeClass("player")
+    findExcludeEntity(owner())
+    findExcludeModel(PropModel)
+    
+    # !!! Disbaled for now !!!
+    #timer("convert_props", 100)
+    
+    timer("clean_props", 250)
+} 
+
+KeyAttack2 = owner():keyAttack2()
+WepType = owner():weapon():type()
+
+# If key2 was just pressed
+if(WepType == "none")
+{
+    if($KeyAttack2 == 1)
+    {
+        # Spawn the prop
+        local SpawnPos = owner():attachmentPos("anim_attachment_RH") + owner():forward()*5
+        local SpawnAng = owner():eyeAngles()
+        spawnProp(SpawnPos, SpawnAng)
+    }
+}
+
+for(K=1, Props:count())
+{
+    Tbl = Props[K, table]
+    V = Tbl["ent", entity]
+    HasHit = Tbl["status", string] == "stopped"
+ 
+    # Only do these checks if the prop hasn't already hit something
+    if(HasHit == 0)
+    {
+        HitEntity = 0
+        # Perf protection
+        if(!perf())
+        {
+            debugPrint("Perfing out of upper loop")
+            break
+        }
+        
+        # If we can search for nearby props this here
+        if(findCanQuery())
+        {
+            # Find props/players near each prop
+            findInSphere(V:pos(), 500)
+            findSortByDistance(V:pos())
+            Nearby = findToArray()
+            foreach(K,NearbyEnt:entity = Nearby)
+            {
+                # Perf protection
+                if(!perf())
+                {
+                    debugPrint("Perfing out of inner loop")
+                    break
+                }
+                
+                # If the distance between a ne arby prop/player and --
+                # -- the prop is less than 10, it hit its target
+                if(NearbyEnt:pos():distance(V:pos()) < 50)
+                {
+                    debugPrint("Was too close to a player or prop")
+                    V:playHitSound(NearbyEnt)
+                    #V:propFreeze(1)
+                    #V:propFreeze(0)
+                    HitEntity = 1
+
+                    setStopped(K)
+                    #Props[K, table]["status", string] = "stopped"
+                    break
+                }
+            }
+        }
+        
+        # If we haven't already hit an entity
+        if(HitEntity == 0)
+        {
+            # Check to make sure it hasn't hit the world
+            GroundCheck = V:pos() - vec(0,0,10)
+            ForwardCheck = V:pos() + V:forward()*10
+            if(!GroundCheck:isInWorld() | !ForwardCheck:isInWorld())
+            {
+                # If it has, freeze it
+                V:playHitSound(world())
+                V:propFreeze(1)
+                #Props[K, table]["status", string] = "stopped"
+                setStopped(K)
+            }
+        }
+    }
+}
+
+# Converts props to solid after GhostDelay milliseconds
+# !!! Sorta disabled for now !!!
+if(clk("convert_props"))
+{
+    Time = curtime()
+    foreach(K,V:table = PropsToConvert)
+    {
+        debugPrint("Prop to convert")
+        Entity = V["ent", entity]
+        Added = V["added", number]
+        if((Time - Added) >= GhostDelay)
+        {
+            debugPrint("Setting solid")
+            Entity:propNotSolid(0)
+            PropsToConvert:removeTable(K)
+        }
+    }
+    timer("convert_props", 100)
+}
+
+if(clk("clean_props"))
+{
+    Time = curtime()
+    for(I=1, Props:count())
+    {
+        local V = Props[I, table]
+        Entity = V["ent", entity]
+        Added = V["added", number]
+        if((Time - Added) >= CleanupTime)
+        {
+            Entity:propDelete()
+            Props:remove(I)
+        }
+    }
+    timer("clean_props", 50)
+}
+
+interval(Interval)
+
+

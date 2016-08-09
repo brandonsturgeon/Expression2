@@ -1,0 +1,76 @@
+@name Flak
+@persist EntName:string Avg:vector MinBombs MaxBombs
+@persist MinTime MaxTime
+
+if(first())
+{
+    EntName = "m9k_ammo_rockets"
+    MinBombs = 1
+    MaxBombs = 3
+    
+    MinTime = 500
+    MaxTime = 3000
+    
+    
+    function vector calculateAveragePosition()
+    {
+        Total = vec()
+        foreach(K, E:entity = players())
+        {
+            Total += E:pos()
+        }
+        
+        local AvgPos = Total / players():count()
+        
+        return AvgPos
+    }
+    
+    function vector randBombPos(Min:vector, Max:vector)
+    {
+        RandVec = randvec(Min, Max)
+        while(!RandVec:isInWorld())
+        {
+            RandVec = randvec(Min, Max)
+        }
+        
+        return RandVec
+    }
+
+    Avg = calculateAveragePosition()
+    
+    timer("Boom", 1)
+}
+
+if(clk("Boom"))
+{
+    Rand = randint(1, 10)
+    ShouldBoom = 0
+    if(Rand < 5)
+    {
+        ShouldBoom = 1
+    }
+    
+    if(ShouldBoom)
+    {
+        # Flawed
+        Min = Avg - Avg * 0.25
+        Max = Avg + Avg * 0.25
+        
+        local RandBombs = randint(MinBombs, MaxBombs)
+        local RandPos = randBombPos(Min, Max)
+        for(I=1, RandBombs)
+        {
+            entSpawn(EntName):setPos(RandPos)       
+        }
+        local Boom = propSpawn("models/props_c17/oildrum001_explosive.mdl", 1)
+        Boom:setPos(RandPos)
+        Boom:propBreak()
+        
+    }
+    
+    local RandDelay = randint(MinTime, MaxTime)
+    print(RandDelay)
+    timer("Boom", RandDelay)
+}
+
+interval(100)

@@ -1,0 +1,5 @@
+@name ShowBone
+@persist 
+
+
+print(owner():attachments())

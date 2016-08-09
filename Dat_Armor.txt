@@ -1,0 +1,33 @@
+@name Dat Armor
+@persist IsAlive Weapons:array 
+
+if(first())
+{
+    Weapons = array("m9k_m98b", "m9k_scar", "m9k_jackhammer")
+    
+    function void giveWeapons()
+    {
+        foreach(K, V:string = Weapons)
+        {owner():give(V)}
+    }
+    
+    function void giveArmor()
+    {
+        for(I=1, 7)
+        {
+            local A = entSpawn("item_battery", owner())
+            A:setPos(owner():pos())
+        }
+    }
+}
+
+IsAlive = owner():isAlive()
+
+if($IsAlive == 1)
+{
+    print("Spawned")
+    giveWeapons()
+    giveArmor()
+}
+
+interval(50)

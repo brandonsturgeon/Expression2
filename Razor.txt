@@ -1,0 +1,361 @@
+@name Razor
+@persist Blades:table MaxBlades MaxBounces
+@persist TimeToLive HitSounds:array Pitch SoundIncrement
+@persist Trails PropModel:string SpawnSound:string
+@persist RandomPitch PitchMin PitchMax LastSeen:entity
+@persist LastSeenClearTime Continuous VerticalSpawn DisplayTargetHint
+@persist TrailColor:vector TrailMaterial:string TrailStart TrailEnd TrailAlpha
+@persist PropMass PropMaterial:string PropColor:vector PropAlpha
+@persist Lights LightColor:vector LightBrightness LightDistance LightIncrement
+@persist MinRandomDistance RandomOffset
+
+@persist Use
+if(first())
+{
+    # Options #
+    MaxBlades = 5 # Total blades you can have at 1 time. Set to -1 for infinite
+    MaxBounces = 12 # How many times will it bounce. Set to -1 for infinite
+    TimeToLive = 0 # In seconds. Set 0 or below for infinite.
+    
+    # Prop Settings
+    PropModel = "models/props_junk/sawblade001a.mdl" 
+    #PropModel = "models/Gibs/HGIBS.mdl"  
+    PropMass = 2 # Will affect the speed of prop, too
+    PropMaterial = "models/alyx/emptool_glow"
+    PropColor = vec(108,0,108)
+    PropAlpha = 255
+    
+    # Misc
+    SpawnSound = "" # Sound made when a blade is created
+    LastSeenClearTime = 0 #In seconds, how often to clear the "last seen" var. Set to 0 to disable
+    Continuous = 1 # Hold down the E key to continuously deploy?
+    VerticalSpawn = 50 #How far above your player does the prop spawn. Default 500
+    DisplayTargetHint = 1 # Display a hint when a new target is selected
+    MinRandomDistance = 100 # Preferred least distance away from player when randomly bouncing
+    RandomOffset = 200 # Min/Max distance when randomly choosing a bounce pos. Should be higher than MinRandomDistance
+    
+    # Trail Settings
+    Trails = 1 # Trails enabled or not
+    TrailColor = vec(108,0,108) # Vector color of trail
+    TrailAlpha = 255 # Alpha of the trail
+    TrailMaterial = "trails/physbeam" # Material of trail
+    TrailStart = 50 # Trail Start Size
+    TrailEnd = 1 # Trail End Size
+    
+    # Light Settings
+    Lights = 1 # Lights on Props?
+    LightColor = vec(108,0,108)
+    LightBrightness = 1000
+    LightDistance = 300
+    
+    HitSounds = array("npc/manhack/grind1.wav",
+                      "npc/manhack/grind2.wav",
+                      "npc/manhack/grind3.wav",
+                      "npc/manhack/grind4.wav",
+                      "npc/manhack/grind5.wav",
+                      "npc/manhack/grind_flesh1.wav",
+                      "npc/manhack/grind_flesh2.wav",
+                      "npc/manhack/grind_flesh3.wav")
+    
+    # CUM!
+    #HitSounds = array("vo/ravenholm/engage02.wav",
+    #                  "vo/ravenholm/engage03.wav")
+    #Pitch of sound. 100 normal, min 1, max 255
+    Pitch = 75
+    
+    # PitchMin/Max only matters if RandomPitch == 1
+    RandomPitch = 0
+    PitchMin = 75
+    PitchMax = 200
+    
+    SoundIncrement = 1
+    
+    LastSeen = owner()
+    
+    
+    # Example structure of a single entry in Blades
+    #[ table("ent": E,
+            "status": "traveling" | "bouncing"
+            "bounces": 0,
+            "target": E,
+            "bounce_pos": V,
+            "bounce_status": "in" | "out")
+    ]#        
+    Blades = table()
+    
+    function vector newPos(Target:entity)
+    {
+        Min = Target:pos() - vec(RandomOffset,RandomOffset,-100)
+        Max = Target:pos() + vec(RandomOffset)
+        for(I=1, 10)
+        {
+            NewPos = randvec(Min, Max)
+            Dist = Target:pos():distance(NewPos)
+            if(NewPos:isInWorld()&(Dist > MinRandomDistance))
+            {
+                return NewPos
+            }
+        }
+        # TODO: wtf do we do here
+        print("Unable to find a target in-world!")
+        return vec(0,0,0)
+    }
+    
+    function void doSound(Ent:entity)
+    {
+        if(SoundIncrement >= MaxBlades)
+        {
+            SoundIncrement = 1
+        }
+        RandSound = HitSounds[randint(1,HitSounds:count()), string]
+        Ent:soundPlay(SoundIncrement,0,RandSound)
+        
+        if(RandomPitch == 1)
+        {
+            local RandPitch = randint(PitchMin, PitchMax)
+            soundPitch(SoundIncrement, RandPitch)
+        }
+        else
+        {
+            soundPitch(SoundIncrement, Pitch)
+        }
+        SoundIncrement += 1
+    }
+    
+    LightIncrement = 1
+    function void addLight(Ent:entity)
+    {
+        if(LightIncrement > 25)
+        {LightIncrement = 1}
+        lightRemove(LightIncrement)
+        local ID = LightIncrement
+        lightCreate(ID, Ent:pos())
+        lightParent(ID, Ent)
+        lightColor(ID, LightColor)
+        lightBrightness(ID, LightBrightness)
+        lightDistance(ID, LightDistance)
+        LightIncrement += 1
+    }
+    
+    if(TimeToLive > 0)
+    {timer("time_to_live", 1000)}
+}
+
+CurBlades = Blades:count()
+
+Use = owner():keyUse()
+
+# If the max blades is -1, ignore max blade limite
+if(MaxBlades == -1)
+{Condition = 1}
+# Otherwise, actually check
+else
+{Condition = (CurBlades < MaxBlades)}
+
+if(Condition == 1)
+{   
+    #TODO change this to isPlayer()
+    AimEnt = owner():aimEntity()
+    if(AimEnt:isPlayer())
+    {        
+        if(LastSeen != AimEnt &(DisplayTargetHint == 1))
+        {
+            hint("Target: "+AimEnt:name(), 2)
+        }
+        LastSeen = AimEnt    
+        if(LastSeenClearTime != 0)
+        {timer("clear_last_seen", LastSeenClearTime*1000)}
+    }
+    
+    if(Continuous == 1)
+    {UseCondition = (Use == 1)}
+    else
+    {UseCondition = ($Use == 1)}
+    
+    if(UseCondition &(LastSeen:isPlayer()))
+    {
+        owner():soundPlay(SoundIncrement, 0, SpawnSound)
+        SoundIncrement += 1
+        
+        local SpawnPos = owner():pos()+vec(0,0,VerticalSpawn)
+        local Blade = propSpawn(PropModel, SpawnPos, 0)
+        #Blade:setAng(Blade:toWorld(ang(0,0,90)))
+        if(Trails ==1)
+        {
+            Blade:setTrails(TrailStart,TrailEnd,1,
+                            TrailMaterial, TrailColor, TrailAlpha)
+        }
+        
+        Blade:setMaterial(PropMaterial)
+        
+        Blade:setMass(PropMass)
+        
+        if(Lights == 1)
+        {addLight(Blade)}
+        local NewStruct = table("ent" = Blade,
+                                "status" = "traveling",
+                                "bounces" = 0,
+                                "target" = LastSeen,
+                                "bounce_pos" = vec(0,0,0),
+                                "bounce_status" = "out")
+        Blades:pushTable(NewStruct)
+    }
+}
+
+if(CurBlades != 0)
+{
+    for(Key=1, CurBlades)
+    {
+        Entry = Blades[Key, table]
+        Ent = Entry["ent", entity]
+        Tar = Entry["target", entity]
+        Status = Entry["status", string]
+        
+        # Failsafe
+        if(Ent == noentity() | !Tar:isAlive())
+        {
+            lightRemove(Ent:id())
+            Ent:propDelete()
+            Blades:removeTable(Key)
+        }
+        if(Tar == noentity())
+        {
+            lightRemove(Ent:id())
+            Ent:propDelete()
+            Blades:removeTable(Key)
+        }
+        else
+        {
+            # Deal with traveling
+            if(Status == "traveling")
+            {
+                Dist = Ent:pos():distance(Tar:pos())
+                # If it's close enough, start bouncing instead
+                if(Dist <= 100)
+                {
+                    Entry["status", string] = "bouncing"
+                    Entry["bounces", normal] = 1
+                }
+                else
+                {
+                    Vec=(Tar:pos()-Ent:pos())*Ent:mass()*(Dist/167)
+                    Ent:applyForce(Vec+$Vec*5)     
+                }
+            }
+            
+            # Deal with bouncing
+            if(Status == "bouncing")
+            {
+                if(MaxBounces == -1)
+                {Condition = 0}
+                else
+                {Condition = (Entry["bounces", normal] > MaxBounces)}
+                
+                if(Condition == 1)
+                {
+                    lightRemove(Ent:id())
+                    Ent:propDelete()
+                    Blades:removeTable(Key)
+                }
+                
+                # TODO Better name for this var
+                BouncePos = Entry["bounce_pos", vector]
+                if(BouncePos == vec(0,0,0))
+                {
+                    # If it's at 0,0,0 get a new pos
+                    Entry["bounce_pos", vector] = newPos(Tar)
+                }
+                else
+                {
+                    Dist = Ent:pos():distance(BouncePos)
+                    BounceStatus = Entry["bounce_status", string]
+
+                    # If we were going in to the player, go out to random pos
+                    if(BounceStatus == "in")
+                    {
+                        if(Dist < 50)
+                        {
+                            doSound(Ent)
+                            Ent:propFreeze(1)
+                            Ent:propFreeze(0)
+                            Entry["bounces", normal] = Entry["bounces", normal]+1
+                            Entry["bounce_pos", vector] = newPos(Tar)
+                            Entry["bounce_status", string] = "out"
+                        }
+                        else
+                        {   
+                            Vec=(BouncePos-Ent:pos())*Ent:mass()*3
+                            Ent:applyForce(Vec+$Vec*5)
+                        }
+                    }
+                    # If we were going out to a random pos, go back to player
+                    elseif(BounceStatus == "out")
+                    {
+                        # TODO this needs to scale with player scale
+                        if(Ent:pos():distance(Tar:pos()+vec(0,0,25)) > 200 | Dist < 100)
+                        {
+                            Ent:propFreeze(1)
+                            Ent:propFreeze(0)
+                            Entry["bounce_pos", vector] = Tar:pos()+vec(0,0,25)
+                            Entry["bounce_status", string] = "in"
+                        }
+                        else
+                        {   
+                            Vec=(BouncePos-Ent:pos())*Ent:mass()*3
+                            Ent:applyForce(Vec+$Vec*5)
+                        }
+                    }
+                    # Shouldn't ever get here
+                    else
+                    {
+                        print("a wut happened with the thing")
+                    }
+
+                        
+                }
+            }
+        }
+    }
+}
+
+if(clk("time_to_live"))
+{
+    if(Blades:count() > 0)
+    {
+        for(I=1, Blades:count())
+        {
+            Entry = Blades[I, table]
+            Lived = Entry["time_lived", normal]
+            if(Lived >= TimeToLive)
+            {
+                Entry["ent", entity]:propDelete()
+                Blades:removeTable(I)
+            }
+            else
+            {
+                Entry["time_lived", normal] = Lived+1
+            }
+        }
+    }
+    timer("time_to_live", 1000)
+}
+
+if(clk("clear_last_seen"))
+{
+    LastSeen = owner()
+}
+
+foreach(K, Entry:table = Blades)
+{
+    if(!perf())
+    {
+        print("Breaking")
+        break
+    }
+    if(Entry["bounce_status", string] == "in")
+    {
+        Pos = Entry["target", entity]:pos()
+        Entry["bounce_pos", vector] = Pos
+    }
+}
+interval(50)

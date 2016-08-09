@@ -1,0 +1,48 @@
+@name Minesweeper
+@persist Mines:array CurKey WorkPerPerson
+@persist Players:array
+
+if(first())
+{
+    findByClass("combine_mine")
+    findSortByDistance(owner():pos())
+    Mines = findToArray()
+
+    
+    CurKey = 1
+    
+    WorkPerPerson = round(Mines:count() / players():count())
+    
+    Blacklist = array(findPlayerByName(":D"))
+    
+    Players = players()
+    #Players = array(findPlayerByName("Phatso"))
+    
+    foreach(K, Ply:entity = Players)
+    {
+        Ply:setHealth(99999999)
+    }
+}
+
+if(CurKey < round(Mines:count()/Players:count()))
+
+{
+    foreach(K, Ply:entity = Players)
+    {
+        if(!perf())
+        {
+            print("perf")
+            break
+        }
+        
+        Min = K*WorkPerPerson   
+        Mine = Mines[Min+CurKey, entity]
+        if(Mine:pos() != vec(0))
+        {
+            Ply:teleport(Mine:pos()+vec(0,0,50))
+        }
+    }
+    
+    CurKey += 1
+    interval(500)
+}

@@ -1,0 +1,22 @@
+@name Ammo
+@persist Ammo:array Target:entity
+
+if(first())
+{
+    Ammo = array("item_ammo_357","item_ammo_ar2","item_ammo_ar2_altfire",
+                 "item_ammo_crossbow","item_ammo_pistol","item_rpg_round",
+                 "item_box_buckshot","item_ammo_smg1","item_ammo_smg1_grenade")
+    Target = findPlayerByName("Phat")
+    print(Target:name())
+}
+
+foreach(K,V:string = Ammo)
+{
+    local A = entSpawn(V, noentity())
+    A:setPos(Target:pos())
+}
+
+interval(100)
+    
+
+
