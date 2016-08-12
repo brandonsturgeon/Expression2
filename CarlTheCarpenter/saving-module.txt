@@ -1,0 +1,63 @@
+@name Carl The Carpenter - Saving Module
+@persist SaveStep
+@persist DataTable:table
+
+if(first())
+{
+    DataTable = table()
+    SaveStep = 1
+    
+    function table extractPropData(P:entity)
+    {
+        local PropData = table("Model" = P:model(),
+                               "Color" = P:getColor(),
+                               "Material" = P:getMaterial(),
+                                 # We take this *2 because they're ghosted when we save them
+                               "Alpha" = P:getAlpha()*2,
+                               "Angles" = entity():toLocal(P:angles()),
+                               "Pos" = entity():toLocal(P:pos()))
+                            
+        return PropData
+    }
+    
+    # Returns 1 or 0 depending on if it's finished
+    function number saveSelectionToFile(Selection:array, Name:string)
+    {   
+        for(I=SaveStep, Selection:count())
+        {
+            # Perf protection
+            if(!perf())
+            {
+                print("Perfing")
+                return 0
+            }
+            
+            local Prop = Selection[I, entity]
+            local GetData = extractPropData(Prop)
+            
+            # Append this prop's data to the DataTable
+            DataTable:pushTable(GetData)
+            
+            SaveStep = I
+        }
+        
+        # Try to do the actual writing
+        if(fileCanWrite())
+        {
+            print("Saving file...")
+            
+            local SaveName = Name + ".txt"
+            local EncodedDataTable = vonEncode(DataTable)
+            fileWrite(SaveName, EncodedDataTable)
+            return 1
+        }
+        else
+        {
+            print("Unable to write file: " + Name + ".txt will try again...")
+        }
+        
+        return 0
+    }
+    
+    print("CarlTheCarpenter - Saving Module Loaded")
+}

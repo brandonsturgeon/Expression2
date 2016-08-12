@@ -1,0 +1,64 @@
+@name Carl The Carpenter - Ghosting Module
+@persist [GhostStep,HoloNum]:number
+
+if(first())
+{
+    GhostStep = 1
+    
+    HoloNum = 1
+    
+    # Returns 1 if ghost was created, returns 0 if not
+    function number createGhostFromPropData(Data:table)
+    {
+        if(holoCanCreate())
+        {
+            local Model = Data["Model", string]
+            local Color = Data["Color", vector]
+            local Material = Data["Material", string]
+            local Alpha = Data["Alpha", number]
+            local Angles = Data["Angles", angle]
+            local Pos = Data["Pos", vector]
+            
+            holoCreate(HoloNum)
+            holoModel(HoloNum, Model)
+            holoColor(HoloNum, Color)
+            holoMaterial(HoloNum, Material)
+            holoAlpha(HoloNum, Alpha)
+            holoAng(HoloNum, entity():toWorld(Angles))
+            holoPos(HoloNum, entity():toWorld(Pos))
+            
+            HoloNum = HoloNum + 1
+            
+            return 1
+        }
+        else
+        {return 0}
+        
+    }
+
+    function number ghostProps(PropTable:table)
+    {
+        print(PropTable:count())
+        for(I=GhostStep, PropTable:count())
+        {
+            if(!perf())
+            {
+                print("Perfing")
+                return 0
+            }
+            local PropData = PropTable[I, table]
+            
+            if(createGhostFromPropData(PropData) == 0)
+            {
+                return 0
+            }
+            
+            GhostStep = I
+        }
+        
+        return 1
+            
+            
+    }
+    print("CarlTheCarpenter - Ghosting Module Loaded")
+}

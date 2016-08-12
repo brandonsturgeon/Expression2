@@ -1,0 +1,69 @@
+@name Carl The Carpenter - Carpenting Module
+@persist [BuildStep,HaveRemovedHolos]:number
+
+if(first())
+{
+    BuildStep = 1
+    HaveRemovedHolos
+    
+    # Returns 1 if ghost was created, returns 0 if not
+    function number buildPropFromPropData(Data:table)
+    {
+        if(HaveRemovedHolos == 0)
+        {
+            holoDeleteAll()
+            HaveremovedHolos = 1
+        }
+        
+        
+        if(propCanCreate())
+        {
+            local Model = Data["Model", string]
+            local Color = Data["Color", vector]
+            local Material = Data["Material", string]
+            local Alpha = Data["Alpha", number]
+            local Angles = Data["Angles", angle]
+            local Pos = Data["Pos", vector]
+            
+            local Prop = propSpawn(Model, 1)
+            
+            Prop:setModel(Model)
+            Prop:setColor(Color)
+            Prop:setMaterial(Material)
+            Prop:setAlpha(Alpha)
+            Prop:setAng(entity():toWorld(Angles))
+            Prop:setPos(entity():toWorld(Pos))
+            
+            return 1
+        }
+        else
+        {return 0}
+        
+    }
+
+    function number buildProps(PropTable:table)
+    {
+        print(PropTable:count())
+        for(I=BuildStep, PropTable:count())
+        {
+            if(!perf())
+            {
+                print("Perfing")
+                return 0
+            }
+            local PropData = PropTable[I, table]
+            
+            if(buildPropFromPropData(PropData) == 0)
+            {
+                return 0
+            }
+            
+            BuildStep = I
+        }
+        
+        return 1
+            
+            
+    }
+    print("CarlTheCarpenter - Ghosting Module Loaded")
+}
