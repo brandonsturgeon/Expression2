@@ -1,38 +1,77 @@
 @name Carl The Carpenter - Carpenting Module
 @persist [BuildStep,HaveRemovedHolos]:number
+@persist LastProp:entity
+@persist LastPropData:table
 
 if(first())
 {
-    BuildStep = 1
-    HaveRemovedHolos
+    # Includes
+    #include "CarlTheCarpenter/sound-module"
     
+    # Initial Var setting
+    BuildStep = 1
+    HaveRemovedHolos = 0
+    LastProp = noentity()
+    LastPropData = table()
+    
+    # Fixes 254 alphas when re-setting alhpas
+    # TODO: This shouldn't be necessary. Fix your alpha storing/restoring
+    function number roundAlpha(N:number)
+    {
+        local Diff = 255 - N
+        if(Diff < 5)
+        {
+            return 255
+        }
+        return N
+    }
+    
+    function void finalizeLastProp()
+    {
+        if(LastProp != noentity())
+        {
+            local RealPos =      LastPropData["Pos", vector]
+            local RealMaterial = LastPropData["Material", string]
+            local RealColor =    LastPropData["Color", vector]
+            
+            LastProp:setPos(entity():toWorld(RealPos))
+            LastProp:setMaterial(RealMaterial)
+            LastProp:setColor(RealColor)
+        }
+    }
+            
     # Returns 1 if ghost was created, returns 0 if not
     function number buildPropFromPropData(Data:table)
     {
         if(HaveRemovedHolos == 0)
         {
             holoDeleteAll()
-            HaveremovedHolos = 1
+            HaveRemovedHolos = 1
         }
         
         
         if(propCanCreate())
         {
-            local Model = Data["Model", string]
-            local Color = Data["Color", vector]
-            local Material = Data["Material", string]
-            local Alpha = Data["Alpha", number]
+            finalizeLastProp()
+            
+            playRandomConstructSound()
+            
+            local Model =  Data["Model", string]
+            local Alpha =  roundAlpha(Data["Alpha", number])
             local Angles = Data["Angles", angle]
-            local Pos = Data["Pos", vector]
             
             local Prop = propSpawn(Model, 1)
-            
+
+            # Modify prop
             Prop:setModel(Model)
-            Prop:setColor(Color)
-            Prop:setMaterial(Material)
+            Prop:setColor(vec(255,0,0))
+            Prop:setMaterial("models/wireframe")
             Prop:setAlpha(Alpha)
             Prop:setAng(entity():toWorld(Angles))
-            Prop:setPos(entity():toWorld(Pos))
+            
+            # Sets global LastProp vars
+            LastProp = Prop
+            LastPropData = Data
             
             return 1
         }
@@ -43,27 +82,22 @@ if(first())
 
     function number buildProps(PropTable:table)
     {
-        print(PropTable:count())
-        for(I=BuildStep, PropTable:count())
+        local PropData = PropTable[BuildStep, table]
+        
+        if(buildPropFromPropData(PropData) == 1)
         {
-            if(!perf())
+            if(BuildStep == PropTable:count())
             {
-                print("Perfing")
-                return 0
-            }
-            local PropData = PropTable[I, table]
-            
-            if(buildPropFromPropData(PropData) == 0)
-            {
-                return 0
+                # If we're on the last step, we're done
+                finalizeLastProp()
+                return 1
             }
             
-            BuildStep = I
+            BuildStep = BuildStep + 1
         }
         
-        return 1
-            
+        return 0
             
     }
-    print("CarlTheCarpenter - Ghosting Module Loaded")
+    print("CarlTheCarpenter - Carpenting Module Loaded")
 }

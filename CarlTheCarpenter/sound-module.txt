@@ -1,0 +1,52 @@
+@name Carl The Carpenter - Sound Module
+@persist SoundIndex
+@persist [ConstructSounds,DestroySounds]:array
+
+if(first())
+{
+    ConstructSounds = array("ambient/energy/newspark01.wav",
+                            "ambient/energy/newspark02.wav",
+                            "ambient/energy/newspark03.wav",
+                            "ambient/energy/newspark04.wav",
+                            "ambient/energy/newspark05.wav",
+                            "ambient/energy/newspark06.wav",
+                            "ambient/energy/newspark07.wav",
+                            "ambient/energy/newspark08.wav",
+                            "ambient/energy/newspark09.wav",
+                            "ambient/energy/newspark10.wav",
+                            "ambient/energy/newspark11.wav")
+    
+    DestroySounds = array("")
+    
+    SoundIndex = 1
+    
+    function string getRandomStringFromArray(A:array)
+    {
+        local RandInt = randint(1, A:count())
+        local RandString = A[RandInt, string]
+        
+        return RandString
+    }
+    
+    function void playRandomConstructSound()
+    {
+        local RandSound = getRandomStringFromArray(ConstructSounds)
+        
+        soundStop(SoundIndex-1)
+        entity():soundPlay(SoundIndex, 1, RandSound)
+        
+        SoundIndex = SoundIndex + 1
+    }
+    
+    function void playRandomDestroySound()
+    {
+        local RandSound = getRandomStringFromArray(DestroySounds)
+        
+        soundStop(SoundIndex-1)
+        entity():soundPlay(SoundIndex, 1, RandSound)
+        
+        SoundIndex = SoundIndex + 1
+    }
+    
+    print("CarlTheCarpenter - Sound Module Loaded")
+}

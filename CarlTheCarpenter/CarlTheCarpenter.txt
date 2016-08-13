@@ -15,7 +15,7 @@ if(first())
     # Includes
     #include "CarlTheCarpenter/carpenting-module"
     #include "CarlTheCarpenter/ghosting-module"
-    #include "CarlTheCarpenter/loading-module"    
+    #include "CarlTheCarpenter/loading-module"
     #include "CarlTheCarpenter/saving-module"
        
     Commands = table("!scan" = "Scanning",
@@ -57,6 +57,7 @@ if(first())
         {
             findIncludeClass("prop_physics")
             findInSphere(entity():pos(), 1000)
+            findSortByDistance(entity():pos())
             SelectedProps = findToArray()
             
             return 1
@@ -145,8 +146,6 @@ if(first())
         return buildProps(LoadedFileData)
     }
     
-            
-            
 
     # Initial Var States
     Status = "Waiting"

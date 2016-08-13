@@ -12,18 +12,19 @@ if(first())
     {
         if(holoCanCreate())
         {
+            # Generate data vars
             local Model = Data["Model", string]
             local Color = Data["Color", vector]
-            local Material = Data["Material", string]
             local Alpha = Data["Alpha", number]
             local Angles = Data["Angles", angle]
             local Pos = Data["Pos", vector]
             
+            # Create hologram
             holoCreate(HoloNum)
             holoModel(HoloNum, Model)
             holoColor(HoloNum, Color)
-            holoMaterial(HoloNum, Material)
-            holoAlpha(HoloNum, Alpha)
+            holoMaterial(HoloNum, "models/wireframe")
+            holoAlpha(HoloNum, Alpha/2)
             holoAng(HoloNum, entity():toWorld(Angles))
             holoPos(HoloNum, entity():toWorld(Pos))
             
