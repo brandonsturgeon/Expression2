@@ -16,7 +16,15 @@ if(first())
                             "ambient/energy/newspark10.wav",
                             "ambient/energy/newspark11.wav")
     
-    DestroySounds = array("")
+    DestroySounds = array("ambient/explosions/explode_1.wav",
+                          "ambient/explosions/explode_2.wav",
+                          "ambient/explosions/explode_3.wav",
+                          "ambient/explosions/explode_4.wav",
+                          "ambient/explosions/explode_5.wav",
+                          "ambient/explosions/explode_6.wav",
+                          "ambient/explosions/explode_7.wav",
+                          "ambient/explosions/explode_8.wav",
+                          "ambient/explosions/explode_9.wav")
     
     SoundIndex = 1
     
@@ -38,14 +46,25 @@ if(first())
         SoundIndex = SoundIndex + 1
     }
     
-    function void playRandomDestroySound()
+    function void playRandomDestroySound(P:vector)
     {
         local RandSound = getRandomStringFromArray(DestroySounds)
         
+        local RandIndex = randint(1, 50)
+        
+        holoCreate(RandIndex)
+        holoPos(RandIndex, P)
+        holoVisible(RandIndex, players(), 0)
+        
         soundStop(SoundIndex-1)
-        entity():soundPlay(SoundIndex, 1, RandSound)
+        holoEntity(RandIndex):soundPlay(RandIndex, 1, RandSound)
         
         SoundIndex = SoundIndex + 1
+    }
+    
+    function void removeSoundHolos()
+    {
+        holoDeleteAll()
     }
     
     print("CarlTheCarpenter - Sound Module Loaded")

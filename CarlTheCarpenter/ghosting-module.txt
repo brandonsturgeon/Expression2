@@ -42,21 +42,23 @@ if(first())
         print(PropTable:count())
         for(I=GhostStep, PropTable:count())
         {
+            GhostStep = I
             if(!perf())
             {
                 print("Perfing")
                 return 0
             }
+            
             local PropData = PropTable[I, table]
             
             if(createGhostFromPropData(PropData) == 0)
             {
                 return 0
             }
-            
-            GhostStep = I
         }
         
+        GhostStep = 1
+        HoloNum = 1
         return 1
             
             

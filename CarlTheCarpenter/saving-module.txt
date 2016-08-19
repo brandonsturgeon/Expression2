@@ -1,11 +1,14 @@
 @name Carl The Carpenter - Saving Module
-@persist SaveStep
+@persist SaveStep StartedUpload
 @persist DataTable:table
 
 if(first())
 {
     DataTable = table()
     SaveStep = 1
+    StartedUpload = 0
+    
+    runOnFile(1)
     
     function table extractPropData(P:entity)
     {
@@ -25,6 +28,7 @@ if(first())
     {   
         for(I=SaveStep, Selection:count())
         {
+            SaveStep = I
             # Perf protection
             if(!perf())
             {
@@ -38,22 +42,34 @@ if(first())
             # Append this prop's data to the DataTable
             DataTable:pushTable(GetData)
             
-            SaveStep = I
+
         }
         
         # Try to do the actual writing
         if(fileCanWrite())
         {
-            print("Saving file...")
-            
-            local SaveName = Name + ".txt"
-            local EncodedDataTable = vonEncode(DataTable)
-            fileWrite(SaveName, EncodedDataTable)
-            return 1
+            if(StartedUpload == 0)
+            {
+                print("Saving file...")
+                
+                local SaveName = Name + ".txt"
+                local EncodedDataTable = vonEncode(DataTable)
+                fileWrite(SaveName, EncodedDataTable)
+                
+                StartedUpload = 1
+            }
+
+
         }
         else
         {
             print("Unable to write file: " + Name + ".txt will try again...")
+        }
+        
+        if(fileClk())
+        {
+            print("Finished uploading")
+            return 1
         }
         
         return 0

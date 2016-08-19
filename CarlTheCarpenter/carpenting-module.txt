@@ -2,17 +2,31 @@
 @persist [BuildStep,HaveRemovedHolos]:number
 @persist LastProp:entity
 @persist LastPropData:table
+@persist SaveBuiltProps:array
 
 if(first())
 {
     # Includes
     #include "CarlTheCarpenter/sound-module"
     
+    
+    SaveBuiltProps = array()
     # Initial Var setting
-    BuildStep = 1
-    HaveRemovedHolos = 0
-    LastProp = noentity()
-    LastPropData = table()
+    function void setInitialCarpentingVars()
+    {
+        BuildStep = 1
+        HaveRemovedHolos = 0
+        LastProp = noentity()
+        LastPropData = table()
+        beamClear(1)
+        beamClear(2)
+
+    }
+    setInitialCarpentingVars()
+    
+    # Global var wrapper
+    function array getBuiltProps()
+    {return SaveBuiltProps}
     
     # Fixes 254 alphas when re-setting alhpas
     # TODO: This shouldn't be necessary. Fix your alpha storing/restoring
@@ -39,6 +53,20 @@ if(first())
             LastProp:setColor(RealColor)
         }
     }
+    
+    function void setBeams()
+    {
+        if(LastProp != noentity())
+        {
+            beamSetOriginParent(entity())
+            beamPoint(1, entity())
+            beamPoint(2, LastProp)
+            
+            beamColor(vec(255,0,0))
+            beamColor(1, vec(255,0,0))
+            beamColor(2, vec(255,0,0))
+        }
+    }
             
     # Returns 1 if ghost was created, returns 0 if not
     function number buildPropFromPropData(Data:table)
@@ -61,6 +89,10 @@ if(first())
             local Angles = Data["Angles", angle]
             
             local Prop = propSpawn(Model, 1)
+            
+            setBeams()
+            
+            SaveBuiltProps:pushEntity(Prop)
 
             # Modify prop
             Prop:setModel(Model)
@@ -90,6 +122,7 @@ if(first())
             {
                 # If we're on the last step, we're done
                 finalizeLastProp()
+                setInitialCarpentingVars()
                 return 1
             }
             

@@ -1,19 +1,19 @@
 @name Carl The Carpenter
-@inputs 
-@outputs 
+@model models/props_junk/TrafficCone001a.mdl
 @persist Interval Step ResetAlphaStep
 @persist [Status,CommandArg]:string
 @persist [Commands,LoadedFileData]:table
-@persist [SelectedProps,]:array
+@persist [SelectedProps,BuiltProps]:array
 
 
 # Made by Phatso
 # https://steamcommunity.com/id/Phatso727
-
+    
 if(first())
 {   
     # Includes
     #include "CarlTheCarpenter/carpenting-module"
+    #include "CarlTheCarpenter/destroy-module"
     #include "CarlTheCarpenter/ghosting-module"
     #include "CarlTheCarpenter/loading-module"
     #include "CarlTheCarpenter/saving-module"
@@ -21,7 +21,9 @@ if(first())
     Commands = table("!scan" = "Scanning",
                      "!save" = "Saving",
                      "!load" = "Loading",
-                     "!carpenter" = "Building")
+                     "!carpenter" = "Building",
+                     "!destroy" = "Destroying")
+
     
     # This function should never be run if Status != "Waiting"
     # This should always be what the Owner says
@@ -42,6 +44,7 @@ if(first())
         if(StatusFromCommand != "")
         {
             Status = StatusFromCommand
+            setName("Status: " + Status)
             
             # TODO: this will have to be reset somewhere generic
             # probably in the chat clk section
@@ -146,6 +149,11 @@ if(first())
         return buildProps(LoadedFileData)
     }
     
+    function number doDeconstructing()
+    {
+        return deconstructProps(getBuiltProps())
+    }
+    
 
     # Initial Var States
     Status = "Waiting"
@@ -153,11 +161,12 @@ if(first())
     Interval = 250
     CommandArg = ""
     LoadedFileData = table()
+    BuiltProps = array()
     ResetAlphaStep = 1
     
     
     # Run On's
-    runOnChat(1) 
+    runOnChat(1)
     
     print("CarlTheCarpenter - Core Loaded")
 }
@@ -173,7 +182,7 @@ if(chatClk(owner()))
 # Note: This is in an else to 
 # prevent extra executions when 
 # things are said
-else
+elseif(perf())
 {
     # Scanning
     if(Status == "Scanning")
@@ -217,13 +226,14 @@ else
     {
         if(resetAlpha() == 1)
         {
-            ResetAlphaStep = 1
+            ResetAlphaStep = 1 
             Status = "Waiting"
         }
     }
     
     elseif(Status == "Loading")
     {
+        print("Loading")
         if(doLoading() == 1)
         {
             print("Loaded: " + CommandArg + ".txt !")
@@ -236,6 +246,7 @@ else
     
     elseif(Status == "Ghosting")
     {
+        print("Ghosting")
         if(doGhosting() == 1)
         {
             print(CommandArg + " successfully loaded. !carpenter to construct")
@@ -248,6 +259,16 @@ else
         if(doBuilding() == 1)
         {
             print("Built")
+            BuiltProps = getBuiltProps()
+            Status = "Waiting"
+        }
+    }
+    
+    elseif(Status == "Destroying")
+    {
+        if(doDeconstructing() == 1)
+        {
+            print("Destroyed")
             Status = "Waiting"
         }
     }

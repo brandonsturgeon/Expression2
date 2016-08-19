@@ -1,0 +1,143 @@
+@name Carl The Carpenter - Destroy Module
+@persist PushedProps:array
+@persist FORCE_MOD DeconstructStep
+@persist TimerStarted TimerDone
+@persist ReversedProps:array
+
+if(first())
+{
+    # Includes
+    #include "CarlTheCarpenter/sound-module"
+    
+    FORCE_MOD = 10
+    HEIGHT_OFFSET = 500
+    
+    function void setInitialDestroyVars()
+    {
+        DeconstructStep = 1
+        PushedProps = array()
+        TimerStarted = 0
+        TimerDone = 0
+        ReversedProps = array()
+    }
+    setInitialDestroyVars()
+    
+    function deleteStillProps()
+    {
+        foreach(K, E:entity=PushedProps)
+        { 
+            if(!perf())
+            {break}
+            
+            print(E:vel():toString())
+        }
+    }
+    
+    function number deleteAllProps()
+    {
+        print(_HUD_PRINTCONSOLE,"Deleting all props")
+        for(I=1, PushedProps:count())
+        {
+            if(!perf())
+            {return 0}
+            
+            local E = PushedProps[I, entity]
+            
+            E:propDelete()
+        }
+        return 1
+    }
+        
+      
+    function pushPropAway(P:entity)
+    {
+        if(P:isValid() & (P != noentity()))
+        {
+            P:propFreeze(1)
+            P:propFreeze(0)
+            
+            P:setPos(P:pos() + vec(5))
+            
+            local Force = (P:pos() - (entity():pos()-vec(0,0,HEIGHT_OFFSET)))
+            P:applyForce(Force * (P:mass())*FORCE_MOD)
+            
+            PushedProps:pushEntity(P)
+        }
+        else
+        {
+            print(_HUD_PRINTCONSOLE,"Not a valid entity")
+        }
+    }
+    
+    function array reversreEntityArray(A:array)
+    {
+        local Reversed = array()
+        for(I=A:count(), 1, -1)
+        {
+            if(A:exists(I))
+            {
+                local Value = A[I, entity]
+                print("Index: " + I:toString() + ". Value: " + Value:model())
+                Reversed:pushEntity(Value)
+            }
+        }
+        return Reversed
+    }
+    
+    
+    function number deconstructProps(Props:array)
+    {
+        print(_HUD_PRINTCONSOLE, DeconstructStep:toString()+" : "+Props:count():toString())
+        
+        local Iter = 1
+        local SoundPos = entity():pos()
+        
+        if(ReversedProps:count() == 0)
+        {ReversedProps = reversreEntityArray(Props)}
+        
+        if(DeconstructStep < Props:count())
+        {
+            for(I=DeconstructStep, Props:count())
+            {
+                DeconstructStep = I
+                if(!perf() || (Iter == 3))
+                {
+                    print(_HUD_PRINTCONSOLE,"perfing")
+                    playRandomDestroySound(SoundPos)
+                    return 0
+                }
+                
+                local Prop = ReversedProps[I, entity]
+                SoundPos = Prop:pos()
+                
+                pushPropAway(Prop)
+                
+                Iter = Iter + 1 
+            }
+        }
+        
+        if(TimerStarted == 0)
+        {
+            timer("DeleteAllProps", 5000)
+            TimerStarted = 1
+        }
+        
+        if(clk("DeleteAllProps"))
+        {
+            deleteAllProps()
+            
+            SaveBuiltProps = array()
+            setInitialDestroyVars()
+            removeSoundHolos()
+            
+            print("Deconstructed")
+            
+            return 1      
+        }
+        
+        return 0
+    }
+        
+
+    print("CarlTheCarpenter - Destroy Module Loaded")
+}
