@@ -1,0 +1,149 @@
+@name Bombs AimPos
+@persist EntName:string 
+@persist NumBombs Use
+@persist StrikeTime
+@persist Strikes:table
+@persist Interval Index SoundHolos
+@persist StartingHoloXY StartingHoloScale:vector
+
+if(first())
+{
+    EntName = "m9k_ammo_rockets"
+    NumBombs = 5
+    Index = 1
+    
+    Interval = 50
+    StrikeTime = 10
+    
+    StartingHoloXY = 500
+    StartingHoloScale = vec(StartingHoloXY, StartingHoloXY, 5)
+    
+    SoundHolos = 5
+    Strikes = table()
+    
+    function void removeHolos(I:number)
+    {
+        holoDelete(I)
+        holoDelete(I + 10)
+    }
+    
+    function void startAlarm(I:number, P:vector)
+    {
+        # We're going to create multiple holos to play this sound louder
+        # However, we need to make sure we're not colliding with other holo/sound indexes
+        
+        for(I=50, 50+(SoundHolos*10), 10)
+        {
+            local RandOffset = randvec(vec(-200), vec(200))
+            local OffsetPos = P + RandOffset
+            
+            holoCreate(I, OffsetPos)
+            holoVisible(I, players(), 0)
+            
+            local E = holoEntity(I)
+            E:soundPlay(I, 0, "ambient/alarms/combine_bank_alarm_loop1.wav")
+            soundPitch(I, 255)
+            soundVolume(I, 999999)
+        }
+    }
+
+    function void createHolo(T:table)
+    {
+        # Create moving circle
+        holoCreate(Index, P)
+        holoModel(Index, "hq_torus_thin")
+        holoColor(Index, vec(255, 0, 0))
+        holoShadow(Index, 0)
+        holoDisableShading(Index, 1)
+        holoScaleUnits(Index, StartingHoloScale)
+        
+        startAlarm(Index, P)
+        
+        # Create solid outer circle
+        local OuterIndex = Index + 10
+        holoCreate(OuterIndex, P)
+        holoModel(OuterIndex, "hq_cylinder")
+        holoColor(OuterIndex, vec(255, 0, 0))
+        holoAlpha(OuterIndex, 127)
+        holoShadow(OuterIndex, 0)
+        holoDisableShading(OuterIndex, 1)
+        holoScaleUnits(OuterIndex, StartingHoloScale)
+    }
+    
+    function void adjustHolo(I:number, T:number)
+    {
+        local TimeDiff = realtime() - T
+        
+        local Div = TimeDiff / StrikeTime
+        local ScaleFactor = 1 - Div
+        
+        local Resize = StartingHoloScale * vec(ScaleFactor, ScaleFactor, 1)
+        
+        holoScaleUnits(I, Resize)
+    }
+    
+    function void doBoom(P:vector)
+    {
+        for(I=1, NumBombs)
+        {
+            entSpawn(EntName):setPos(P)
+        }
+        Boom = propSpawn("models/props_c17/oildrum001_explosive.mdl", 1)
+        Boom:setPos(P)
+        Boom:propBreak()
+    }
+    
+    function void checkStrikes()
+    {
+        for(I=1, Strikes:count())
+        {
+            local Strike = Strikes[I, table]
+            local StrikeIndex = Strike["Index", number]
+            local StrikePos = Strike["Pos", vector]
+            local StrikeInitTime = Strike["InitTime", number]
+            
+            local Time = realtime()
+            local Diff = Time - StrikeInitTime
+            
+            adjustHolo(StrikeIndex, StrikeInitTime)
+            
+            if(Diff >= StrikeTime)
+            {
+                print("Boom")
+                doBoom(StrikePos)
+                removeHolos(StrikeIndex)
+                soundPurge()
+                Strikes:removeTable(I)
+            }
+        }
+    }
+
+}
+Use = owner():keyUse()
+
+if($Use == 1)
+{
+    local IsEntity = 0
+    
+    AimPos = owner():aimPos()
+    
+    if(AimPos:isInWorld())
+    {
+        if(owner():aimEntity():isPlayer())
+        {Isentity = 1}
+        
+        local Struct = table("Index" = Index,
+                             "Pos" = AimPos,
+                             "InitTime" = realtime(),
+                             "IsEntity" = IsEntity)
+                            
+        print("Pushing struct")
+        Strikes:pushTable(Struct)
+        
+        createHolo(Struct)
+        Index = Index + 1
+    }
+}
+
+checkStrikes()
+interval(Interval)

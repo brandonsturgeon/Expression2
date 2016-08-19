@@ -1,0 +1,9 @@
+@name 
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+A = array("This", "That", "blah")
+
+print(A[1, string])

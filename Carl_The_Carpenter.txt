@@ -1,0 +1,246 @@
+@name Carl The Carpenter
+@inputs 
+@outputs 
+@persist Interval Step ResetAlphaStep
+@persist [Status,CommandArg]:string
+@persist [Commands,LoadedFileData]:table
+@persist [SelectedProps,]:array
+
+
+# Made by Phatso
+# https://steamcommunity.com/id/Phatso727
+
+if(first())
+{   
+    # Includes
+    #include "CarlTheCarpenter/ghosting-module"
+    #include "CarlTheCarpenter/loading-module"    
+    #include "CarlTheCarpenter/saving-module"
+       
+    Commands = table("!scan" = "Scanning",
+                     "!save" = "Saving",
+                     "!load" = "Loading")
+    
+    # This function should never be run if Status != "Waiting"
+    # This should always be what the Owner says
+    function string parseCommand()
+    {
+        local LastSaid = lastSaid()
+        local Split = LastSaid:explode(" ")
+     
+        # Extract the command and the argument   
+        local Command = Split[1, string]
+        local Argument = Split[2, string] 
+        
+        # Get status from the command given
+        local StatusFromCommand = Commands[Command, string]
+        
+        # If it's a valid command that returns a string,
+        # update the current Status
+        if(StatusFromCommand != "")
+        {
+            Status = StatusFromCommand
+            
+            # TODO: this will have to be reset somewhere generic
+            # probably in the chat clk section
+            CommandArg = Argument
+        }
+    } 
+    
+    # Scans for props and throws them in an array
+    SelectedProps = array()
+    function number doScanning()
+    {
+        if(findCanQuery())
+        {
+            findIncludeClass("prop_physics")
+            findInSphere(entity():pos(), 1000)
+            SelectedProps = findToArray()
+            
+            return 1
+        }
+        else
+        {
+            return 0
+        }  
+        
+    }
+    
+    # Converts selected pros to Holograms
+    function number doHologramming()
+    {
+        for(I=Step, SelectedProps:count())
+        {   
+            local Prop = SelectedProps[I, entity]
+            local Alpha = Prop:getAlpha()
+            
+            Prop:setAlpha(Alpha/2)
+        }
+        return 1
+    }
+    
+    # Used after !save to revert actions done by doHologramming()
+    function number resetAlpha()
+    {
+        for(I=ResetAlphaStep, SelectedProps:count())
+        {
+            if(!perf())
+            {return 0}
+            
+            local Prop = SelectedProps[I, entity]
+            local Alpha = Prop:getAlpha()
+            
+            Prop:setAlpha(Alpha * 2)
+            
+            ResetAlphaStep = I
+        }
+        
+        return 1
+    }
+    
+    # Used to check if an argument is 
+    # given to a command which requires it
+    function number checkArg()
+    {
+        if(CommandArg == "")
+        {
+            print("Invalid filename argument")
+            return 0
+        }
+        else
+        {
+            return 1
+        }
+    }
+    
+    # Saving logic
+    function number doSaving()
+    {
+        if(checkArg() == 1)
+        {
+            # From /saving-module.txt include
+            return saveSelectionToFile(SelectedProps, CommandArg)
+        }
+    }  
+    
+    # Loading logic
+    function number doLoading()
+    {
+        if(checkArg() == 1)
+        {
+            return loadDataFromFile(CommandArg)
+        }
+    }
+    
+    # Ghosting logic
+    function number doGhosting()
+    {
+        return ghostProps(LoadedFileData)
+    }
+    
+            
+            
+
+    # Initial Var States
+    Status = "Waiting"
+    Step = 0
+    Interval = 250
+    CommandArg = ""
+    LoadedFileData = table()
+    ResetAlphaStep = 1
+    
+    
+    # Run On's
+    runOnChat(1) 
+    
+    print("CarlTheCarpenter - Core Loaded")
+}
+
+# Command Checking
+if(chatClk(owner()))
+{
+    if(Status == "Waiting")
+    {parseCommand()}
+}
+
+# Logic
+# Note: This is in an else to 
+# prevent extra executions when 
+# things are said
+else
+{
+    # Scanning
+    if(Status == "Scanning")
+    {
+        if(doScanning() == 1)
+        {
+            print("Finished scanning, converting to holograms")
+            
+            Status = "Hologramming"
+        }
+    }
+    
+    # Hologramming
+    elseif(Status == "Hologramming")
+    {
+        if(doHologramming() == 1)
+        {
+            local NumProps = SelectedProps:count()
+            print(NumProps:toString() + " props selected. !save {name} to save.")
+            
+            Status = "Waiting"
+        }
+    }
+    
+    # Saving to file
+    elseif(Status == "Saving")
+    {
+        if(doSaving() == 1)
+        {
+            print("Do saving is 1")
+            # Resets the alpha on props changed in doHologramming
+            
+            print("Saved: " + CommandArg + ".txt !")
+            
+            CommandArg = ""
+            Status = "ResettingAlpha" 
+        }
+    }
+    
+    elseif(Status == "ResettingAlpha")
+    {
+        if(resetAlpha() == 1)
+        {
+            ResetAlphaStep = 1
+            Status = "Waiting"
+        }
+    }
+    
+    elseif(Status == "Loading")
+    {
+        if(doLoading() == 1)
+        {
+            print("Loaded: " + CommandArg + ".txt !")
+            
+            # We want to use this same CommandArg in the 'Ghosting' stage
+            #CommandArg = ""
+            Status = "Ghosting"
+        }
+    }
+    
+    elseif(Status == "Ghosting")
+    {
+        print("Ghosting")
+        if(doGhosting() == 1)
+        {
+            print(CommandArg + " successfully loaded. !carpenter to construct")
+            Status = "Waiting"
+        }
+    }
+    
+    # Problem catcher
+    elseif(Status != "Waiting")
+    {print("Panic! Invalid Status! : " + Status)}
+} 
+
+interval(250) 
