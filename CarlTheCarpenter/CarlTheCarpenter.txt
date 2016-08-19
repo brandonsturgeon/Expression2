@@ -134,7 +134,12 @@ if(first())
     {
         if(checkArg() == 1)
         {
-            return loadDataFromFile(CommandArg)
+            local Result = loadDataFromFile(CommandArg)
+            if(Result == 1)
+            {
+                print("Loading func returned 1")
+            }
+            return Result
         }
     }
     
@@ -233,7 +238,6 @@ elseif(perf())
     
     elseif(Status == "Loading")
     {
-        print("Loading")
         if(doLoading() == 1)
         {
             print("Loaded: " + CommandArg + ".txt !")

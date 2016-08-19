@@ -27,16 +27,11 @@ if(first())
                 
                 local ReadData = fileRead()
                 
+                print("Von loading")
                 LoadedFileData = vonDecodeTable(ReadData)
-                
-                if(perf())
-                {
-                    return 1
-                }
-                else
-                {
-                    return 0
-                }
+                print("Done Von Loading")
+
+                return 1
             }
         }
         
