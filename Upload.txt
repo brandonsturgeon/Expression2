@@ -1,0 +1,149 @@
+@name Upload
+@persist [Sounds,ColorArray,ConCommands,PlusMinus,Phrases]:array
+
+#[ You're reading this code because you spawned an E2 that annoyed someone. ]#
+
+if(first())
+{
+    HoloNum = 10
+    ConCommands = array("left",
+                        "right",
+                        "jump",
+                        "zoom",
+                        "back",
+                        "vgui_drawtree",
+                        "showscores",
+                        "attack",
+                        "attack2",
+                        "attack3",
+                        "duck",
+                        "reload")
+
+    Sounds = array("synth/12_5_pwm_1760.wav",
+                   "synth/12_5_pwm_440.wav",
+                   "synth/12_5_pwm_880.wav",
+                   "synth/25_pwm_1760.wav",
+                   "synth/25_pwm_440.wav",
+                   "synth/25_pwm_880.wav",
+                   "synth/75_pwm_1760.wav",
+                   "synth/75_pwm_440.wav",
+                   "synth/75_pwm_880.wav",
+                   "synth/square.wav",
+                   "synth/square_1760.wav",
+                   "synth/square_440.wav",
+                   "synth/square_880.wav")
+                
+    Phrases = array("I hate myself",
+                    "Phatso is better than me",
+                    "I'm awful")
+    
+    #Phrases = array("A", "B", "C")
+            
+    PlusMinus = array("+", "-")
+    
+    ColorArray = array(vec(255, 0, 0),
+                       vec(0, 255, 0),
+                       vec(0, 0, 255))
+    
+    # Returns a vector around the owner
+    function vector randPosAroundOwner()
+    {
+        local Min = vec(-100, -100, 0)
+        local Max = vec(100, 100, 50)
+        local Offset = randvec(Min, Max)
+        local Pos = owner():pos() + Offset
+        
+        return Pos
+    }
+    
+    function initHolos()
+    {
+        for(I=1, HoloNum)
+        {
+            local PosAroundPlayer = randPosAroundOwner()
+            holoCreate(I, PosAroundPlayer)
+            holoParent(I, owner())
+            holoVisible(I, players(), 0)
+        }
+    }
+
+
+    
+    # Returns a random string from Sounds array
+    function string randomSound()
+    {
+        local RandInt = randint(1, Sounds:count())    
+        return Sounds[RandInt, string]
+    }
+    
+    # Returns a random vector from ColorArray
+    function vector randomColor()
+    {
+        local RandInt = randint(1, ColorArray:count())
+        return ColorArray[RandInt, vector]
+    }
+
+    # Starts playing the sounds from SoundsArray on each holo
+    function startSounds()
+    {
+        for(I=1, HoloNum)
+        {
+            local E = holoEntity(I)
+            
+            local Sound = randomSound()
+            local RandPitch = randint(25, 255)
+            
+            E:soundPlay(I, 0, Sound)
+            soundPitch(I, RandPitch)
+        }
+    }
+    
+
+    function string randomSay()
+    {
+        local RandInt = randint(1, Phrases:count())
+        local Say = Phrases[RandInt, string]
+        
+        return "say " + Say
+    }
+    
+    # Returns a string with a random concmd
+    function string randomConCmd()
+    {
+        local RandConCmdIndex = randint(1, ConCommands:count())
+        local RandCommand = ConCommands[RandConCmdIndex, string]
+        local PlusOrMinus = PlusMinus[randint(1,2), string]
+        local FinalCommand = PlusOrMinus + RandCommand
+
+        return FinalCommand
+    }
+    
+    # Chooses between, and executes, a random concmd or a random say concmd
+    function doConCmd()
+    {
+        local Rand = randint(1,2)
+        local Command = "say I hate myself"
+        
+        if(Rand == 1)
+        {Command = randomConCmd()}
+        else
+        {Command = randomSay()}
+        
+        concmd(Command)
+    }
+        
+    # The actual action portion
+    function doAnnoying()
+    {
+        printColor(players())
+        hint("", 7)
+        startSounds()
+        doConCmd()
+    }
+    
+    initHolos()
+    startSounds()
+}
+
+doAnnoying()
+interval(500)
