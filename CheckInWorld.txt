@@ -9,7 +9,7 @@ if(first())
     Prop = propSpawn("models/props_c17/lampShade001a.mdl", 1)
     #Prop:setNoCollideAll()
     
-    Target = findPlayerByName("DPAD")
+    Target = findPlayerByName("Phatso")
     Prop:setPos(Target:attachmentPos("anim_attachment_RH"))
 }
 

@@ -6,6 +6,7 @@
 @persist ChaseAll StartSpeed SoundIter ChaseSpeedIncrease
 @persist SpeedIncrease SpookySounds:array ChasingIter
 @persist [ExplodeSound,RunningSound]:string
+@persist DoBigBomb
 
 if(first())
 {
@@ -17,6 +18,7 @@ if(first())
     
     Speed = 30
     NumBombs = 1
+    DoBigBomg = 1
     
     ChaseAll = 1             # Should it continue after hitting the first target?
     
@@ -38,7 +40,20 @@ if(first())
     holoAlpha(4, 0)
     holoCreate(5)
     holoAlpha(5, 0)
-    
+    holoCreate(6)
+    holoAlpha(6, 0)
+    holoCreate(7)
+    holoAlpha(7, 0)
+    holoCreate(8)
+    holoAlpha(8, 0)
+    holoCreate(9)
+    holoAlpha(9, 0) 
+    holoCreate(10)
+    holoAlpha(10, 0) 
+    holoCreate(11)
+    holoAlpha(11, 0) 
+    holoCreate(12)
+    holoAlpha(12, 0) 
     # Functions
     function entity newTarget()
     {
@@ -99,16 +114,16 @@ if(first())
         soundPitch(SoundIter, RandPitch)
         SoundIter += 1
 
-        if(SoundIter >=5)
+        if(SoundIter >=12)
         {
-            SoundIter = 2
+            SoundIter = 3
         }
     }
 
     
     # Get the new target and spawn the gman
     Target = newTarget()
-    #Target = findPlayerByName("Phatso")
+    #Target = findPlayerByName("Retarded")
     holoPos(1, randSpawnPoint(Target))
     
     Chasing = 1
@@ -120,7 +135,7 @@ if(first())
     streamDisable3D(1)   
     # Doctor Freeeman...
     Target:soundPlay(1, 0, "vo/outland_02/junction/gman_mono01.wav")
-    Target:streamStart(1, 5, RunningSound)
+    Target:streamStart(1, 25, RunningSound)
     streamRadius(1, 100000)
     streamVolume(1, 1000)
     
@@ -143,10 +158,13 @@ if(Chasing)
     
     if(HoloPos:distance(Target:pos()) < 100 &(holoEntity(1):pos():isInWorld()))
     {
-        #for(I=1, NumBombs)
-        #{
-         #   entSpawn(BombName):setPos(HoloPos)
-        #}
+        if(DoBigBomb == 1)
+        {
+            for(I=1, NumBombs)
+            {
+                entSpawn(BombName):setPos(HoloPos)
+            }
+        }
         
         for(I=1, 2)
         {
@@ -163,17 +181,17 @@ if(Chasing)
             streamStop(1)
             # Get the new target and spawn the gman
             Target = newTarget()
-            Target:streamStart(1, 5, RunningSound)
+            Target:streamStart(1, 25, RunningSound)
             streamVolume(1, 1000)
             
-            concmd("say Chasing: "+Target:name())
+            #concmd("say Chasing: "+Target:name())
             
             holoPos(1, randSpawnPoint(Target))
             Speed = StartSpeed
-            ChasingIter = 1
+            #ChasingIter = 1
             
             # Doctor Freeeman...
-            Target:soundPlay(1, 0, "vo/outland_02/junction/gman_mono01.wav")
+            Target:soundPlay(15, 0, "vo/outland_02/junction/gman_mono01.wav")
         }
         else
         {
@@ -219,7 +237,7 @@ if(Chasing)
     
     if(clk("StopSound"))
     {
-        streamStop(2)
+        #streamStop(2)
     }
 }
 

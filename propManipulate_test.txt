@@ -7,5 +7,6 @@
 if(first())
 {
     P = entity():isConstrainedTo()
-    P:propManipulate(vec(0), ang(vec(0)), 1,1,1)
+    #P:propManipulate(vec(0), ang(vec(0)), 1,1,1)
+    P:setAng(ang(vec(0)))
 }

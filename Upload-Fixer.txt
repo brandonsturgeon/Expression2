@@ -1,0 +1,35 @@
+@name Upload-Fixer
+@inputs 
+@outputs 
+@persist ConcOmmands:array Counter
+@trigger 
+
+if(first())
+{
+    ConCommands = array("left",
+                        "right",
+                        "jump",
+                        "zoom",
+                        "back",
+                        "vgui_drawtree",
+                        "showscores",
+                        "attack",
+                        "attack2",
+                        "attack3",
+                        "duck",
+                        "reload")
+    Counter = 1
+}
+
+if(Counter > ConCommands:count())
+{
+    selfDestruct()
+}
+    
+local Str = "-" + ConCommands[Counter, string]
+concmd(Str)
+hint("Running: " + Str, 500)
+
+Counter += 1
+
+interval(500)

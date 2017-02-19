@@ -1,0 +1,14 @@
+@name 
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+A = owner():getAnimation()
+
+A = owner():getAnimationByName("gmod_breath_noclip_layer")
+
+print(A)
+
+
+interval(1000)

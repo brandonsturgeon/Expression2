@@ -1,7 +1,7 @@
 @name Carl The Carpenter - Destroy Module
 @persist PushedProps:array
 @persist FORCE_MOD DeconstructStep
-@persist TimerStarted TimerDone
+@persist TimerStarted TimerDone MaxIter
 @persist ReversedProps:array
 
 if(first())
@@ -11,6 +11,8 @@ if(first())
     
     FORCE_MOD = 10
     HEIGHT_OFFSET = 500
+    
+    MaxIter = 5
     
     function void setInitialDestroyVars()
     {
@@ -35,7 +37,6 @@ if(first())
     
     function number deleteAllProps()
     {
-        print(_HUD_PRINTCONSOLE,"Deleting all props")
         for(I=1, PushedProps:count())
         {
             if(!perf())
@@ -77,7 +78,6 @@ if(first())
             if(A:exists(I))
             {
                 local Value = A[I, entity]
-                print("Index: " + I:toString() + ". Value: " + Value:model())
                 Reversed:pushEntity(Value)
             }
         }
@@ -100,7 +100,7 @@ if(first())
             for(I=DeconstructStep, Props:count())
             {
                 DeconstructStep = I
-                if(!perf() || (Iter == 3))
+                if(!perf() || (Iter == MaxIter))
                 {
                     print(_HUD_PRINTCONSOLE,"perfing")
                     playRandomDestroySound(SoundPos)

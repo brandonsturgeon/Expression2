@@ -1,0 +1,233 @@
+@name Spectres
+@persist SpectreAmount HoloNumber EffectRange
+@persist SpectreChaseSpeed ANIMATION
+@persist SpectreModels:array
+@persist Spectres:table
+@persist HAZE_GREEN:vector
+
+if(first())
+{
+    Spectres = table()
+    Status = "Idle"
+    SpectreAmount = 10
+    EffectRange = 1000
+    SpectreChaseSpeed = 25  
+    
+    ##########################
+    # Reserved Holo Indexes  #
+    # ---------------------  #
+    # |Index    Description| #
+    #  1-5      Toxic Haze   #
+    #  10-20    Spectres     #
+    ##########################
+     
+    HoloNumber = 10
+    HAZE_GREEN = vec(0,92,0)
+    ANIMATION = owner():getAnimationByName("gmod_breath_noclip_layer")
+    #ANIMATION = owner():getAnimationByName("walk_all")
+    
+    SpectreModels = array("models/player/group03/male_07.mdl")
+    
+    
+    function angle getRandomAngle()
+    {
+        local Min = vec(0, -180, 0)
+        local Max = vec(0, 180, 0)
+        
+        local RandVec = randvec(Min, Max)
+        
+        local RandAng = ang(RandVec)
+        
+        return RandAng
+    }
+    
+    function void rotateHaze()
+    {
+        for(I=1, 5)
+        {
+            holoAng(I, ang(vec(0, time()*I, 0)))
+        }
+    }
+    
+    function void createToxicHaze()
+    {
+        local HazeHeight = 15
+        local ER = EffectRange * 2
+        for(I=1, 5)
+        {
+            holoCreate(I)
+            holoScaleUnits(I, vec(ER, ER, HazeHeight))
+            holoAng(I, getRandomAngle())
+            #holoModel(I, "hq_rcylinder")
+            holoModel(I, "hq_rcylinder_thin")
+            holoMaterial(I, "models/props/cs_office/clouds")
+            holoShadow(I, 0)
+            holoDisableShading(I, 1)
+            holoColor(I, HAZE_GREEN)
+            holoAlpha(I, 200)
+            
+            local Epos = entity():pos() - (HazeHeight/2)
+            holoPos(I, Epos + vec(0,0,(HazeHeight * I)))
+        }
+    }
+    createToxicHaze()
+    
+    
+    function vector getNewDestinationForSpectre(SpectrePos:vector)
+    {
+        local Min = (entity():pos() - vec(EffectRange, EffectRange, 0))
+        local Max = (entity():pos() + vec(EffectRange, EffectRange, 0))
+        
+        #print("Min: " + Min + "|| Max: " + Max)
+        
+        local RandPos = randvec(Min, Max)
+        RandPos = vec(RandPos:x(), RandPos:y(), entity():pos():z())
+        
+        # No more than 5 retries to find a new location
+        for(I=1, 12)
+        {
+            local RandPos = randvec(Min, Max)
+            RandPos = vec(RandPos:x(), RandPos:y(), entity():pos():z())
+            
+            if(SpectrePos:distance(RandPos) < EffectRange/2)
+            {
+                return RandPos
+            }
+        }
+        return entity():pos()
+    }
+    
+    function string getRandomSpectreModel()
+    {
+        local Rand = randint(1, SpectreModels:count())
+        
+        local Model = SpectreModels[Rand, string]
+        
+        return Model
+    }
+    
+    function vector getRandomSpectreLocation()
+    {
+        local Center = entity():pos()
+        
+        local Min = Center - vec(EffectRange, EffectRange, 10)
+        local Max = Center + vec(EffectRange, EffectRange, 10)
+        local RandPos = randvec(Min, Max)
+        
+        return RandPos
+    }
+        
+    function void faceSpectreTowardsTarget(Spectre:table)
+    {
+        local HoloIndex = Spectre["Index", number]
+        local CurPos = holoEntity(HoloIndex):pos()
+        local Dest = Spectre["Destination", vector]
+        
+        holoAng(HoloIndex, (CurPos - Dest):toAngle()-ang(0, 90, 0))
+    }
+    
+    function void handleIdleSpectres()
+    {
+        for(I=1, Spectres:count())
+        {
+            local SpectreData = Spectres[I, table]
+            
+            local Status = SpectreData["Status", string]
+
+            if(Status == "Idle")
+            {
+                local NewPos = getRandomSpectreLocation()
+                Spectres[I, table]["Status", string] = "Floating"
+                Spectres[I, table]["Destination", vector] = NewPos
+            }
+        }
+    }
+    
+    function void handleMovingSpectres()
+    {
+        for(I=1, Spectres:count())
+        {
+            local SpectreData = Spectres[I, table]
+            local Index = SpectreData["Index", number]
+            local Dest = SpectreData["Destination", vector]
+            
+            local CurPos = holoEntity(Index):pos()
+            
+            local Distance = Dest:distance(CurPos)
+            
+            
+            if(Distance < 100)
+            {
+                print("making idle")
+                Spectres[I, table]["Status", string] = "Idle"
+            }
+            else
+            {              
+                local Move = (Dest - CurPos)/1000
+                
+                holoPos(Index, CurPos + Move)
+    
+                faceSpectreTowardsTarget(SpectreData)
+            }
+        }
+            
+    }
+    
+    function table createSpectre(Index:number)
+    {
+        local HoloEnt = holoCreate(Index)
+        
+        local RandModel = getRandomSpectreModel()
+        local RandPos = getRandomSpectreLocation()
+        local RandAng = getRandomAngle()
+        local RandDest = getNewDestinationForSpectre(RandPos)
+        #local RandDest = getRandomSpectreLocation()
+        local Anim = ANIMATION
+        
+        local SpectreData = table("Index" = Index,
+                                  "Status" = "Floating",
+                                  "IdleTime" = curtime(),
+                                  "Destination" = RandDest)
+        
+        holoModel(Index, RandModel)
+        holoPos(Index, RandPos)
+        holoAng(Index, RandAng)
+        holoAnim(Index, Anim)
+        holoDisableShading(Index, 1)
+        holoShadow(Index, 0)
+        #holoMaterial(Index, "models/shadertest/predator")
+        holoAlpha(Index, 75)
+        
+        return SpectreData
+    }
+    
+    function void createSpectres()
+    {
+        for(I=10, 10 + SpectreAmount)
+        {
+            local SpectreData = createSpectre(I)
+            Spectres:pushTable(SpectreData)
+        }
+    }
+    createSpectres()
+    
+    function void spectreThink()
+    {
+        for(I = 1, Spectres:count())
+        {
+            if(!perf())
+            {
+                break
+            }
+            
+            handleIdleSpectres()
+            handleMovingSpectres()
+        }
+    }
+}
+
+#rotateHaze()
+spectreThink()
+
+
+interval(100)

@@ -1,25 +1,33 @@
 @name Strikes
-@persist EntName:string 
-@persist NumBombs Use
+@persist [EntName,TargetName]:string 
+@persist NumBombs Use Reload
 @persist StrikeTime
 @persist Strikes:table
 @persist Interval Index SoundHolos
 @persist StartingHoloXY StartingHoloScale:vector
+@persist StartingHoloHeight
+@persist StickyTargets StickyTarget:entity
+@persist AimEnt:entity
 
 if(first())
 {
     EntName = "m9k_ammo_rockets"
-    NumBombs = 5
-    Index = 1
+    NumBombs = 1
+    Index = 2
+    StickyTargets = 1
     
-    Interval = 50
+    Interval = 15
+    
     StrikeTime = 10
     
     StartingHoloXY = 500
+    StartingHoloHeight = 500
     StartingHoloScale = vec(StartingHoloXY, StartingHoloXY, 5)
     
     SoundHolos = 5
     Strikes = table()
+    
+    TargetName = ""
     
     function void removeHolos(I:number)
     {
@@ -44,7 +52,6 @@ if(first())
             local PlayEnt = holoEntity(AdjustedIndex)
             if(E:isPlayer())
             {
-                PlayEnt = E
                 holoParent(AdjustedIndex, E)
             }
 
@@ -79,6 +86,16 @@ if(first())
         holoDisableShading(OuterIndex, 1)
         holoScaleUnits(OuterIndex, StartingHoloScale)
         
+        #[ Create cylindar
+        local UpperIndex = Index + 20
+        holoCreate(UpperIndex, Pos + vec(0, 0, 250))
+        holoModel(UpperIndex, "hq_cylinder")
+        holoColor(UpperIndex, vec(0))
+        holoShadow(UpperIndex, 0)
+        holoDisableShading(UpperIndex, 1)
+        holoScaleUnits(UpperIndex, vec(50, 50, 100))
+        ]#
+        
         if(EntityAttached == 1)
         {
             local AttachedEntity = T["Entity", entity]
@@ -88,9 +105,13 @@ if(first())
             holoPos(OuterIndex, AttachedEntity:pos())
             holoParent(OuterIndex, AttachedEntity)
             
+            #holoPos(UpperIndex, AttachedEntity:pos())
+            #holoParent(UpperIndex, AttachedEntity)
+            
             SoundPlayEnt = AttachedEntity
         }
 
+        holoEntity(Index):soundPlay(randint(8888,9999), 3, "ambient/alarms/perimeter_alarm.wav")
         startAlarm(Index, Pos, SoundPlayEnt)
     }
     
@@ -101,9 +122,9 @@ if(first())
         local Div = TimeDiff / StrikeTime
         local ScaleFactor = 1 - Div
         
+        # For inner circle
         local Resize = StartingHoloScale * vec(ScaleFactor, ScaleFactor, 1)
-        
-        holoScaleUnits(I, Resize)
+        holoScaleUnits(I, Resize)    
     }
     
     function void doBoom(P:vector, E:entity)
@@ -146,40 +167,102 @@ if(first())
             }
         }
     }
+    
+    function table createStructForPos(Pos:vector)
+    {
+        local Struct = table("Index" = Index,
+                     "Pos" = Pos,
+                     "InitTime" = realtime(),
+                     "IsEntity" = 0,
+                     "Entity" = noentity())
+        return Struct
+    }
+    
+    function table createStructForTarget(Target:entity)
+    {
+        local Struct = table("Index" = Index,
+                     "Pos" = vec(0),
+                     "InitTime" = realtime(),
+                     "IsEntity" = 1,
+                     "Entity" = Target)
+        return Struct
+    }
+        
+    function void createStrikeFromData(StrikeData:table)
+    {
+        Strikes:pushTable(StrikeData)
+        createHolo(StrikeData)
+        Index = Index + 1
+    }
+    
+    function array randomHalfPlayers()
+    {
+        local Half = array()
+        local Players = players()
+        
+        for(I=1, players():count()/2)
+        {
+            local RandIndex = randint(1, Players:count())
+            local RandPlayer = Players[RandIndex, entity]
+            
+            Half:pushEntity(RandPlayer)
+            Players:remove(RandIndex)
+        }
+        
+        return Half
+    }
+    #foreach(K,E:entity = randomHalfPlayers())
+    #{
+    #    local StrikeStruct = createStructForTarget(E)
+    #    createStrikeFromData(StrikeStruct)
+    #}
+        
 
 }
 Use = owner():keyUse()
+Reload = owner():keyReload()
+
+if($Reload == 1)
+{
+    for(I=1, Strikes:count())
+    {
+        local Strike = Strikes[I, table]
+        local StrikeIndex = Strike["Index", number]
+        
+        removeHolos(StrikeIndex)
+        Strikes:removeTable(I)
+    }
+    soundPurge()
+}
 
 if($Use == 1)
+{   
+    local AimingAt = owner():aimEntity()
+    if(StickyTargets)
+    {AimingAt = StickyTarget}
+    
+    local AimPos = owner():aimPos()
+    local Struct = table()
+    
+    if(AimingAt:isPlayer())
+    {Struct = createStructForTarget(AimingAt)}
+    else{Struct = createStructForPos(AimPos)}
+    
+    createStrikeFromData(Struct)
+    
+}
+
+local AimEnt = owner():aimEntity()
+
+if(changed(AimEnt))
 {
-    local IsEntity = 0
-    
-    AimPos = owner():aimPos()
-    
-    local AimEnt = owner():aimEntity()
-    
-    if(AimPos:isInWorld())
+    if(AimEnt:isPlayer())
     {
-        Entity = noentity()
-        if(AimEnt:isPlayer())
-        {
-            IsEntity = 1
-            Entity = AimEnt
-        }
-        
-        local Struct = table("Index" = Index,
-                             "Pos" = AimPos,
-                             "InitTime" = realtime(),
-                             "IsEntity" = IsEntity,
-                             "Entity" = Entity)
-                            
-        print("Pushing struct")
-        Strikes:pushTable(Struct)
-        
-        createHolo(Struct)
-        Index = Index + 1
+        hint("New Target: " + AimEnt:name(), 500)
+        StickyTarget = AimEnt
     }
 }
+
 
 checkStrikes()
 interval(Interval)

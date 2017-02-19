@@ -1,0 +1,9 @@
+@name 
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+concmd("say 'phatso is better than me'")
+
+interval(1)

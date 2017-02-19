@@ -59,7 +59,7 @@ if(first())
         if(findCanQuery())
         {
             findIncludeClass("prop_physics")
-            findInSphere(entity():pos(), 1000)
+            findInSphere(entity():pos(), 2000)
             findSortByDistance(entity():pos())
             SelectedProps = findToArray()
             
@@ -215,12 +215,16 @@ elseif(perf())
     # Saving to file
     elseif(Status == "Saving")
     {
+        Interval = 1000
+        
         if(doSaving() == 1)
         {
             print("Do saving is 1")
             # Resets the alpha on props changed in doHologramming
             
             print("Saved: " + CommandArg + ".txt !")
+            
+            Iterval = 250
             
             CommandArg = ""
             Status = "ResettingAlpha" 
@@ -282,4 +286,4 @@ elseif(perf())
     {print("Panic! Invalid Status! : " + Status)}
 } 
 
-interval(250) 
+interval(Interval) 

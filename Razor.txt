@@ -29,7 +29,7 @@ if(first())
     SpawnSound = "" # Sound made when a blade is created
     LastSeenClearTime = 0 #In seconds, how often to clear the "last seen" var. Set to 0 to disable
     Continuous = 1 # Hold down the E key to continuously deploy?
-    VerticalSpawn = 50 #How far above your player does the prop spawn. Default 500
+    VerticalSpawn = 100 #How far above your player does the prop spawn. Default 500
     DisplayTargetHint = 1 # Display a hint when a new target is selected
     MinRandomDistance = 100 # Preferred least distance away from player when randomly bouncing
     RandomOffset = 200 # Min/Max distance when randomly choosing a bounce pos. Should be higher than MinRandomDistance
@@ -58,13 +58,13 @@ if(first())
                       "npc/manhack/grind_flesh3.wav")
     
     # CUM!
-    #HitSounds = array("vo/ravenholm/engage02.wav",
-    #                  "vo/ravenholm/engage03.wav")
+    HitSounds = array("vo/ravenholm/engage02.wav",
+                      "vo/ravenholm/engage03.wav")
     #Pitch of sound. 100 normal, min 1, max 255
     Pitch = 75
     
     # PitchMin/Max only matters if RandomPitch == 1
-    RandomPitch = 0
+    RandomPitch = 1
     PitchMin = 75
     PitchMax = 200
     

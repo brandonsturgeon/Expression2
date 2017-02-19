@@ -1,0 +1,11 @@
+@name Find
+@persist A:array
+
+findInSphere(entity():pos(), 500) 
+
+A = findToArray()
+
+foreach(K, E:entity = A)
+{print("Model: " + E:model() + ". Owner: " + E:owner():name())}
+
+interval(2000)

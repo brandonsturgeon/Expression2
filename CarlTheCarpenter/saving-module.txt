@@ -15,7 +15,7 @@ if(first())
         local PropData = table("Model" = P:model(),
                                "Color" = P:getColor(),
                                "Material" = P:getMaterial(),
-                                 # We take this *2 because they're ghosted when we save them
+                                 # We take this *2 because they're /2 when ghosted while saving
                                "Alpha" = P:getAlpha()*2,
                                "Angles" = entity():toLocal(P:angles()),
                                "Pos" = entity():toLocal(P:pos()))
@@ -50,13 +50,12 @@ if(first())
         {
             if(StartedUpload == 0)
             {
+                StartedUpload = 1
                 print("Saving file...")
                 
                 local SaveName = Name + ".txt"
                 local EncodedDataTable = vonEncode(DataTable)
                 fileWrite(SaveName, EncodedDataTable)
-                
-                StartedUpload = 1
             }
 
 

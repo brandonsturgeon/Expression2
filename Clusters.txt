@@ -1,0 +1,99 @@
+@name Clusters
+@persist IsClustering NumBombs NumClusters Spread Use
+@persist EntName:string
+@persist Clusters:table
+
+if(first())
+{
+    EntName = "m9k_ammo_rockets"
+    IsClustering = 0
+    NumBombs = 3
+    NumClusters = 3
+    Spread = 200
+    
+    Clusters = table()
+    #               table("ent": E, "delay": 3.2, "launch": 1234567.89)
+        
+    function void doBoom(Pos:vector, Num)
+    {
+        for(I=1, Num)
+        {
+            entSpawn(EntName):setPos(Pos)
+        }
+        Boom = propSpawn("models/props_c17/oildrum001_explosive.mdl", 1)
+        Boom:setPos(Pos)
+        Boom:propBreak()
+    }
+    
+    function void createCluster(Origin:vector, Delay, Force:vector)
+    {
+        local Cluster = propSpawn("models/props_c17/canister01a.mdl", 0)
+        Cluster:setNoCollideAll()
+        Cluster:setPos(Origin+vec(0,0,50))
+        
+        Cluster:applyForce(Force)
+        
+        local Launch = time()
+        local ClusterTable = table("ent" = Cluster, "delay" = Delay, "launch" = Launch)
+        Clusters:pushTable(ClusterTable)
+    }
+    
+    function void createClusters(Num, Origin:vector)
+    {
+        # Dragons
+        for(I=1, Num)
+        {
+            local RandDelay = random(0.5, 3)
+            
+            local Min = Origin - vec(Spread, Spread, 0)
+            local Max = Origin + vec(Spread, Spread, Spread*1.5)
+            local RandDest = randvec(Min, Max)
+            
+            local RandForce = (RandDest - Origin)*5
+            createCluster(Origin, RandDelay, RandForce)
+        }
+    }
+     
+    function void startCluster()
+    {
+        local Pos = owner():aimPos()
+        doBoom(Pos, NumBombs)
+        createClusters(NumClusters, Pos)
+    }
+    
+    function void checkClusters()
+    {
+        for(I=1, Clusters:count())
+        {
+            Cluster = Clusters[I, table]
+
+            local Ent = Cluster["ent", entity]
+            local Delay = Cluster["delay", number]
+            local Launch = Cluster["launch", number]
+            
+            if((Launch + Delay) < time())
+            {
+                print("Destroying: "+I:toString())
+                doBoom(Ent:pos(), 1)
+                Ent:propDelete()
+                Clusters:removeTable(I)
+            }
+        }
+    }
+}
+
+Use = owner():keyUse()
+
+if($Use == 1)
+{
+    if(IsClustering == 0)
+    {
+        startCluster()
+        IsClustering = 1
+    }
+}
+
+if(Clusters:count() > 0)
+{checkClusters()}
+
+interval(500)

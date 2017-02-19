@@ -1,0 +1,41 @@
+@name Charges
+@outputs Out1 Out2 Out3 Out4 Out5
+@persist Charge Use
+
+if(first())
+{
+    Charge = 0
+
+    function void doReset() {
+        Charge = 0
+        Out1 = Out2 = Out3 = Out4 = Out5 = 0
+    }
+
+    function void turnOn(I:number) {
+        ioSetOutput("Out" + I, 1)
+        print("Turning on " + I:toString())
+    }
+}
+
+Use = owner():keyUse()
+
+if(Use) {
+    if(Charge < 100) {
+        Charge = Charge + 1
+        hint("Charge: " + Charge, 0.5)
+    }
+    else {
+        hint("Fully Charged", 0.5)
+        # This is what to do if you're holding it down and Charge is already full
+    }
+}
+elseif($Use == 0) {
+    doReset()
+}
+
+
+if(Charge % 20 == 0) {
+    turnOn(Charge / 20)
+}
+
+interval(100)

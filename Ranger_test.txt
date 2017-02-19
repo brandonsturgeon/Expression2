@@ -1,0 +1,16 @@
+@name Ranger test
+@persist E:entity
+
+if(first())
+{
+    E = entity()
+    holoCreate(1)
+}
+
+A = rangerOffset(100, E:pos(), E:forward())
+
+holoPos(1, A:pos())
+print(A:entity():model())
+
+
+interval(100)
