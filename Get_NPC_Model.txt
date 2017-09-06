@@ -1,0 +1,9 @@
+@name Get NPC Model
+@persist NPC:entity
+
+if(first())
+{
+    findByClass("npc_*")
+    NPC = findClosest(entity():pos())
+    print(NPC:model())
+}

@@ -1,0 +1,23 @@
+@name BuBoomAll
+@inputs 
+@outputs 
+@persist Target:entity Prop:entity 
+@trigger 
+#Target = findPlayerByName("polar")
+interval(100)
+Exceptions = table("Discord", "Phatso727", "Forcas","Lancyman")
+foreach(K,V:entity = players())
+{
+    if(Exceptions:exists(V:name()) == 0)
+    {
+        Target = V
+        Alive= Target:isAlive()
+        if(Alive)
+        {
+            Prop=propSpawn("models/props_c17/FurnitureTable001a.mdl",0)
+            Prop:setPos(Target:pos()+vec(0,0,25))
+            Prop:propBreak()
+        }
+    }
+
+}

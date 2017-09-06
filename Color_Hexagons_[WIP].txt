@@ -1,0 +1,67 @@
+@name Color_Hexagons [WIP]
+@inputs 
+@outputs 
+@persist Grid:table SqSize BoardSize
+
+if(first())
+{
+    SqSize = 30 # X and Y Size of each square (In GUnits)
+    Grid = table()
+    
+    # Loop through and make a grid
+    Counter = 1
+    Offset = 0
+    for(X=1, 7)
+    {
+        for(Y=1, 7)
+        {
+            holoCreate(Counter, entity():pos() + vec((X*26)+Offset, Y*22, 0))
+            holoModel(Counter, "hexagon")
+            holoParent(Counter, entity())
+            holoScaleUnits(Counter, vec(30, 30, 3))
+            local RandColor = randvec(vec(1,1,1), vec(255,255,255))
+            holoColor(Counter, vec(0,0,0))
+            Grid[Counter:toString(), vector] = RandColor
+            
+            Counter += 1
+            if(Offset == 0)
+            {
+                Offset = 13
+            }
+            else
+            {
+                Offset = 0
+            }
+        }
+        Offset = 0
+
+    }
+    # Destroy starter square
+    holoDelete(99)
+}
+
+foreach(Holo, Color:vector = Grid)
+{
+    local Key = Holo:toNumber()
+    local Ent = holoEntity(Key)
+    foreach(K, Player:entity = array(owner()))
+    {
+        if(Player:pos():distance(entity():pos()) < 500)
+        {
+            if(Player:pos():z() < entity():pos():z()+15)
+            {
+                local PlayerPos = vec2(Player:pos():x(), Player:pos():y())
+                local Min = vec2(Ent:pos():x()-(SqSize/2), Ent:pos():y()-(SqSize/2))
+                local Max = vec2(Ent:pos():x()+(SqSize/2), Ent:pos():y()+(SqSize/2))
+                if(inrange(PlayerPos, Min, Max))
+                {
+                    holoColor(Key, Color)
+                }
+            }
+        }
+        local Diff = vec(0,0,0) - Ent:getColor()
+        holoColor(Key, Ent:getColor() + (Diff/10))
+    }
+}
+
+interval(100)

@@ -1,0 +1,7 @@
+@name Get Class
+@inputs 
+@outputs 
+@persist 
+@trigger 
+interval(500)
+print(ranger(100):entity():type())

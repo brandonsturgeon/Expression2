@@ -1,0 +1,46 @@
+@name Hydrophobia
+@inputs 
+@outputs
+@persist Entity:entity E:entity Hint:number ForceAmount:number
+@trigger 
+runOnTick(1)
+
+############
+# Settings #
+############
+Hint        = 1   # Whether or not you want hints on startup.
+ForceAmount = 900 # How much force you want to apply.
+
+
+#######################
+# Defining the Entity #
+#######################
+Entity = entity():isConstrainedTo() #That's what the vehicle is!
+
+# Initial hints. Can disable by changing Variable Hint to 0 in the settings.
+if(first() & (Hint==1))
+{
+    hint("HydroPhobia",5)
+    hint("Made by Phatso727",5)
+    hint("Attach to Entity, and be water free!",5)
+    hint("Change settings in the code!",10)
+}
+    if( first() )
+    {
+        E=entity() # entity() being chip. Defined it as E to make it easier to edit.
+        E:setAlpha(0) # Turns it invisible.
+    }
+
+
+##################
+# Force equation #
+##################
+
+Coords = vec(0,0,1000) # Defining where we want the Vehicle to fly when it hits water.
+
+Force = (Coords - Entity:pos()) * E:mass() * ForceAmount # Used E:mass() here because Vehicle:mass() was buggy.
+
+if(Entity:isUnderWater()) # If the vehicle hits water..
+{
+    Entity:applyForce(Force) # Apply force using the equation, Force.
+}

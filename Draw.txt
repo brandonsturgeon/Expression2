@@ -1,0 +1,164 @@
+@name Draw
+@inputs EGP:wirelink ColorEGP:wirelink ControlEGP:wirelink Laser
+@outputs ReadCursor:string
+@persist Counter:number Color:vector Background:vector
+@persist Cursor:vector2 Grab:number
+@persist Red:number Green:number Blue:number
+@persist UseLaser Options:table BCounter Owner:entity
+
+if(first())
+{    
+    # Options
+    UseLaser = 0
+    
+    function void createButton(Text:string, Position:vector2)
+    {
+        ControlEGP:egpBox(100+Counter, Position, vec2(100, 50))
+        ControlEGP:egpText(100+Counter+50, Text, Position)
+    }
+    
+    # Beginning Vars
+    Color = vec(255, 0, 0)
+    Background = vec(0, 0, 0)
+    Red = 255
+    Green = 255
+    Blue = 255
+    Counter = 1
+    BCounter = 0
+    
+    # EGP
+    EGP:egpClear()
+    
+    # Background
+    EGP:egpBox(0, vec2(0, 0), vec2(1024, 1024))
+    EGP:egpColor(0, Background)
+    
+    # Color EGP
+    ColorEGP:egpClear()
+    ColorEGP:egpBox(1, vec2(100, 100), vec2(100, 50))
+    ColorEGP:egpColor(1, vec(255, 0, 0))
+    
+    ColorEGP:egpBox(2, vec2(210, 100), vec2(100, 50))
+    ColorEGP:egpColor(2, vec(0, 255, 0))
+    
+    ColorEGP:egpBox(3, vec2(320, 100), vec2(100, 50))
+    ColorEGP:egpColor(3, vec(0, 0, 255))
+    
+    ColorEGP:egpBoxOutline(4, vec2(100, 100), vec2(100, 355))
+    ColorEGP:egpBoxOutline(5, vec2(210, 100), vec2(100, 355))
+    ColorEGP:egpBoxOutline(6, vec2(320, 100), vec2(100, 355))
+    
+    ColorEGP:egpBox(7, vec2(10, 10), vec2(502, 50))
+    
+    # Color Text
+    ColorEGP:egpText(11, Red:toString(), vec2(-13, -10))
+    ColorEGP:egpParent(11, 1)
+    
+    ColorEGP:egpText(21, Green:toString(), vec2(-13, -10))
+    ColorEGP:egpParent(21, 2)
+    
+    ColorEGP:egpText(31, Blue:toString(), vec2(-13, -10))
+    ColorEGP:egpParent(31, 3)
+    
+    # Control EGP
+    ControlEGP:egpClear()
+    
+    Options = table("Brushwidth" = table("var" = "BrushWidth",
+                                         "buttons" = array(1, 5, 10)),
+                    "Shape" = table("var" = "Shape",
+                                    "buttons" = array("Line", "Circle")))
+    
+    Counter = 40
+    X = 10
+    Y = 10
+    Owner = owner()
+    
+   # foreach(K, V:
+    
+
+}
+# Use a laser pointer?
+if(UseLaser == 1)
+{Active = Laser}
+# If not, use the Use ke
+else{Active = Owner:keyUse()}
+
+# Set the cursor
+if(EGP:egpCursor(Owner) != vec2(-1, -1))
+{Cursor = EGP:egpCursor(Owner)}
+else{Cursor = ColorEGP:egpCursor(Owner)-vec2(0, 25)}
+
+ReadCursor = Cursor:toString()
+
+# Becaus fuck drawing from the middle
+EGP:egpDrawTopLeft(1)
+ColorEGP:egpDrawTopLeft(1)
+
+# Looking at the drawing EGP
+if(Active &(changed(Cursor)) &(EGP:egpCursor(Owner) != vec2(-1, -1)))
+{   
+    # Draws a line from your last cursor position, to your current one
+    EGP:egpLine(Counter, Cursor, Cursor - $Cursor)
+    EGP:egpColor(Counter, vec(Red, Green, Blue))
+    Counter = Counter + 1
+}
+
+# Looking at the Color EGP
+if(Active &(ColorEGP:egpCursor(Owner) != vec2(-1, -1)))
+{
+    # Checks all of the sliders, sliders have an index of 1, 2, and 3
+    for(I=1, 3)
+    {
+        # If we're grabbing one, set !Grab! to the index of what we're grabbing
+        if(inrange(Cursor, ColorEGP:egpPos(I), ColorEGP:egpPos(I)+ColorEGP:egpSize(I)))
+        {
+            Grab = I
+            break
+        }
+    }
+    
+    # R-G-B Text
+    ColorEGP:egpSetText(11, ceil(Red):toString())
+    ColorEGP:egpSetText(21, ceil(Green):toString())
+    ColorEGP:egpSetText(31, ceil(Blue):toString())
+
+}
+# If we're not looking at the ColorEGP, we can't be grabbing any sliders
+else
+{Grab = 0}
+
+
+# If we're grabbing a sliderbar
+if(Grab != 0)
+{
+    # Spooky maths stuff to calculate where to put the slider
+    if(100 <= Cursor[2])
+    {
+        if(Cursor[2] <= 355+ColorEGP:egpSize(Grab)[2])
+        {
+            ColorEGP:egpPos(Grab, vec2(ColorEGP:egpPos(Grab)[1], Cursor[2]))
+        }
+        else{ColorEGP:egpPos(Grab, vec2(ColorEGP:egpPos(Grab)[1], 355+ColorEGP:egpSize(Grab)[2]))}
+    }
+    else{ColorEGP:egpPos(Grab, vec2(ColorEGP:egpPos(Grab)[1], 100))}
+}
+
+# Reset the code by hitting the Use key on the chip
+if(Owner:keyUse() &(Owner:aimEntity() == entity()))
+{
+    print("Reset")
+    reset()
+    }
+
+
+# Extra spooky maths stuff to calculate the color value based on the position
+Red = 255-((ColorEGP:egpPos(1)[2] - 100)/305)*255
+Green = 255-((ColorEGP:egpPos(2)[2] - 100)/305)*255
+Blue = 255-((ColorEGP:egpPos(3)[2] - 100)/305)*255
+ColorEGP:egpColor(7, vec(Red, Green, Blue))
+
+ControlEGP:egpText(1, "Main EGP objects: "+EGP:egpNumObjects():toString(), vec2(10, 10))
+ControlEGP:egpText(2, "Color EGP objects: "+ColorEGP:egpNumObjects():toString(), vec2(10, 30))
+ControlEGP:egpText(3, "Control EGP objectsL "+ControlEGP:egpNumObjects():toString(), vec2(10, 50))
+
+interval(100)

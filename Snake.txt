@@ -1,0 +1,83 @@
+@name Snake
+@inputs Keyboard Active Screen:wirelink
+@outputs Kick
+@persist Dirs:table Move:vector2 Speed:number
+@persist Snake:number Moves:array Key:string
+
+if(first())
+{
+
+    # Vector lookup table for key presses
+    Dirs = table("w" = vec2(0, -1),
+                 "a" = vec2(-1, 0),
+                 "s" = vec2(0, 1),
+                 "d" = vec2(1, 0))
+    Move = vec2(0, 1)
+    Speed = 25
+    Snake = 1
+    Moves = array()
+    
+    # Beginning EGP stuff. 420 is the random dot, 1 is the snake head
+    Screen:egpClear()
+    Screen:egpCircle(420, vec2(randint(10, 502), randint(10, 502)), vec2(25/2, 25/2))
+    Screen:egpBox(1, vec2(256, 256), vec2(25, 25))
+    
+    # Used to check if the head is on the screen stil
+    function normal onScreen(Index)
+    {
+        local Pos = Screen:egpPos(Index)
+        
+        return inrange(Pos, vec2(0, 0), vec2(512-25, 512-20))
+    }
+}
+# Makes sure you're not kicked out again
+Kick = 0
+# Fuck drawing from the middle
+Screen:egpDrawTopLeft(1)
+
+setName("| Snake |  Score: " + toString(Snake))
+
+# Gets the last key that was pressed and sets Move to the direction
+Key = toChar(Keyboard)
+if(Key != "" & Dirs:exists(Key))
+{
+    Move = Dirs[Key, vector2]
+}
+
+# Only reads once per interval if you're in the keyboard
+if(Active & clk())
+{
+    Screen:egpPos(1, Screen:egpPos(1) + (Move * Speed))
+    if(Screen:egpPos(1):distance(Screen:egpPos(420)) <= 30)
+    {
+        Screen:egpPos(420, randvec2(vec2(6, 6), vec2(floor(512/25), floor(512/25))*25))
+        Snake += 1
+        Screen:egpBox(Snake, vec2(0, 0), vec2(25, 25))
+    }
+    
+    # Adds the last move to the beginning
+    Moves:insertVector2(0, Screen:egpPos(1))
+    if(Moves:count() > (Snake+1))
+    {
+        # Removes the last one if the Array is too long
+        Moves:popVector2()
+    }
+    
+    # Positions each body part
+    for(I=2, Snake+1)
+    {
+        # Checks for failures, if you collide with body, or go off the screen
+        if(Screen:egpPos(1) == Screen:egpPos(I) | onScreen(1) == 0)
+        {
+            Screen:egpPos(1, vec2(256, 256))
+            Move = vec2(0, 1)
+            Snake = 1
+            Kick = 1
+            reset()
+        }
+        Screen:egpPos(I, Moves[(I-1), vector2])
+    }
+
+}
+
+interval(300)

@@ -1,0 +1,26 @@
+@name Rocket Intercept
+@persist E:entity
+
+
+
+if(first())
+{
+    E = entity():isConstrainedTo()
+    runOnTick(1)
+}
+
+if(findCanQuery())
+{
+    findByClass("rpg_missile")
+    #findByClass("prop_ragdoll")
+    findToArray()
+    Target = findClosest(entity():pos())
+    if(Target:isValid())
+    {
+        E:setPos(Target:pos())
+        E:setAng(ang(0,0,0))
+    }
+}
+
+
+

@@ -1,0 +1,86 @@
+@name PhysLines
+@inputs ScaleSize Pos:vector Colors
+@persist PlayerColors:array Use
+@trigger 
+
+if(first())
+{
+    ScaleSize = 10
+    for(I = 1, 12)
+    {
+        for(X = I*100, (I*100)+20)
+        {
+            holoCreate(X)
+            #print(holoRemainingSpawns())
+            holoScaleUnits(X, vec(10/ScaleSize, 10/ScaleSize, 50/ScaleSize))
+            holoModel(X, "hq_cylinder")
+            holoAlpha(X, 50)
+        }
+    }
+    
+    PlayerColors = array( vec(255, 0, 0),
+                          vec(0, 255, 0),
+                          vec(0, 0, 255),
+                          vec(255, 255, 0),
+                          vec(0, 255, 255),
+                          vec(255, 0, 255),
+                          vec(0, 150, 255),
+                          vec(150, 0, 255),
+                          vec(255, 150, 0),
+                          vec(255, 0, 150),
+                          vec(255, 255, 150),
+                          vec(150, 150, 255))
+}
+Use = owner():keyUse()
+if(owner():aimEntity() == entity() &($Use == 1))
+{
+    print("Resetting")
+    reset()
+}
+
+foreach(K, Player:entity = players())
+{
+    if(Player:weapon():type() == "weapon_physgun" & Player:keyAttack1())
+    {
+        for(I = (K*100), (K*100)+20)
+        {
+            if ((Pos - Player:aimPos()):length() >= 1000) {
+                AdjustedAim = (Player:aimPos() - Player:shootPos()):normalized()*(1000 - Pos:distance(Player:shootPos())) + Player:shootPos()
+            }
+            else{ AdjustedAim = Player:aimPos()}
+
+            local Distance = Player:shootPos():distance(AdjustedAim)
+            
+            local CalcPos = (Player:shootPos()+Distance/20*(I-(100*K))*(AdjustedAim - Player:shootPos()):normalized() - Pos)/ ScaleSize + Pos
+
+            if(CalcPos:distance(Pos) <= 100)
+            {
+                holoAlpha(I, 50)
+                if(Colors)
+                {holoColor(I, PlayerColors[Player:id(), vector])}
+                else
+                {holoColor(I, vec(255, 255, 255))}
+                #print("PHYS: Setting: "+Player:name()+" to: "+PlayerColors[K,vector]:toString())
+                holoPos(I, CalcPos - vec(0, 0, 2))
+                holoAng(I, Player:eyeAngles() + ang(90, 0, 0))
+            }
+            else
+            {
+                holoAlpha(I, 0)
+            }
+        }
+    }
+    else
+    {
+        for(I = (K*100), (K*100)+20)
+        {
+            holoAlpha(I, 0)
+        }
+    }
+}
+interval(100)
+
+#(Prop - Player):length() * (Prop - Player):normalized() + Player
+
+
+

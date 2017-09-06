@@ -1,0 +1,43 @@
+@name 
+@inputs Target:entity
+@outputs Pos:vector Color:vector Bearing
+@persist Time Theta
+@trigger 
+
+runOnTick(1)
+
+Time += 0.25
+if(Time >= 360){
+    Time = 0
+}
+
+
+Radius=50
+
+#------------------
+
+
+#Calculate X Y and Z
+Theta = Time
+
+
+Bearing = abs((Target:bearing(entity():pos()) + 180) - Theta)
+if(Bearing <= 20)
+{
+    Distance= Target:pos():distance(entity():pos()) / 100
+    Color = vec(255, 0, 0)
+}
+else{
+    Distance = 1
+    Color = vec(255, 255, 255)
+}
+
+X=Radius*cos(Theta)*Distance
+Y=Radius*sin(Theta)*Distance
+
+
+
+At=entity():toWorld(entity():boxCenter())
+
+Pos = At + vec(X, Y, 5)
+

@@ -1,0 +1,32 @@
+@name Spooky Triangles [EGP]
+@inputs EGP:wirelink Active
+@outputs Cur_point:vector2 Cur1 Cur2 Cur3 Color:vector
+@persist Point1:vector2 Point2:vector2 Point3:vector2 Cur_point:vector2 Arr:array Counter
+@trigger 
+interval(1)
+if(first())
+{
+    EGP:egpClear()
+    Point1 = vec2(0, 512)
+    Point2 = vec2(256, 0)
+    Point3 = vec2(512, 512)
+    Arr = array(Point1, Point2, Point3)
+    Cur_point = Point1
+    Counter = 1
+    #EGP:egpResolution(vec2(0, 0), vec2(512, 512))
+}
+
+if(Active)
+{
+    Color = vec(randint(1, 255), randint(1, 255), randint(1, 255))
+    Calc_point = Arr[randint(1, 3), vector2]
+    CalX = ((Cur_point[1] + Calc_point[1])/2)
+    CalY = ((Cur_point[2] + Calc_point[2])/2)
+    
+    #EGP:egpCircle(Counter, vec2(CalX, CalY), vec2(1, 1))
+    EGP:egpLine(Counter, Cur_point, Calc_point)
+    
+    Cur_point = vec2(CalX, CalY)
+    EGP:egpColor(Counter, Color)
+    Counter = Counter + 1
+}

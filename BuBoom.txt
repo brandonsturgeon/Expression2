@@ -1,0 +1,17 @@
+@name BuBoom
+@inputs 
+@outputs 
+@persist Target:entity Prop:entity 
+@trigger 
+Target = findPlayerByName("phat")
+interval(100)
+Alive= Target:isAlive()
+if(Alive)
+{
+    Prop=propSpawn("models/props_c17/oildrum001_explosive.mdl",0)
+    Prop:setPos(Target:pos()+vec(0,0,25))
+    Prop:propBreak()
+}
+print("here") 
+
+

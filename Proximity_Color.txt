@@ -1,0 +1,65 @@
+@name Proximity Color
+@inputs 
+@outputs RGB:vector Distance
+@persist Closest:entity IgnoreOwner UseWhitelist Whitelist:array
+
+if(first())
+{
+    ###########
+    # Options #
+    ###########
+    IgnoreOwner = 1
+    UseWhitelist = 1
+    Whitelist = array("Phatso727")
+    
+    
+    RGB = vec(255,255,255)
+    findIncludeClass("player")
+    
+    # Checks the distance given and changes colors accordingly
+    function vector distanceCheck(Distance)
+    {
+        if(Distance <= 600)
+        {
+            return vec(255, 0, 0)
+        }
+        
+        if(Distance <= 1000)
+        {
+            return vec(255, 255, 0)
+        }
+        
+        if(Distance <= 1500)
+        {
+            return vec(0, 255, 0)
+        }
+    }
+    
+    if(IgnoreOwner)
+    {findExcludePlayer(owner())}
+    if(UseWhitelist)
+    {
+        foreach(K, Ply:string = Whitelist)
+        {
+            findExcludePlayer(Ply)
+        }
+    }
+}
+
+if(findCanQuery())
+{
+    findInSphere(entity():pos(), 1500)
+    Closest = findClosest(entity():pos())
+}
+
+# Closest will be invalid if no players are near
+if(Closest:isValid())
+{
+    Distance = Closest:pos():distance(entity():pos())
+    RGB = distanceCheck(Distance)
+}
+else
+{
+    RGB = vec(0, 0, 0)
+}
+interval(500)

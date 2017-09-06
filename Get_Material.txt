@@ -1,0 +1,10 @@
+@name Get Material
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+if(first())
+{
+    print(entity():isConstrainedTo():getMaterial())
+}

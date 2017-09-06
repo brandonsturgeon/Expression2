@@ -1,0 +1,128 @@
+@name text shit
+@persist E:entity LS:array I Max Move Update
+
+if(first())
+{
+    if (duped())
+    {
+        selfDestruct()
+    }
+    
+    Update = 100
+    
+    E = entity()    
+    Move = 1
+    Max = 60
+    
+    function void clearData()
+    {
+        for(I = 1, Max)
+        {
+            holoAlpha(I, 0)
+            I = 0
+        }
+    }                
+    
+    interval(Update)
+    runOnChat(1)
+    
+    timer("create", 1)
+}
+elseif(clk("create"))
+{
+    while(I < Max & holoCanCreate())
+    {
+        I++
+    
+        holoCreate(I, E:toWorld(vec(0 - (I * 14), 0, 15)), vec() + 1)
+        holoDisableShading(I, 1)
+        holoMaterial(I, "models/debug/debugwhite")
+        holoAlpha(I, 0)
+        holoColor(I, vec() + 255)
+        holoParent(I, E)
+    }
+    
+    if(I != Max)
+    {
+        timer("create", 1000)
+    }
+    else
+    {
+        stoptimer("create")
+    }
+}
+elseif(chatClk())
+{
+    clearData()
+    LS = lastSaid():explode("")           
+    for(I = 1, clamp(LS:count(), 1, Max))
+    {            
+        local Str = LS[I, string]             
+        if(toByte(Str) > 96 & toByte(Str) < 123)
+        {
+            Str = "l_" + Str
+        }
+        
+        switch(Str)
+        {
+            case "'", Str = "apost" break
+            case "?", Str = "qmark" break
+            case "!", Str = "xmark" break
+            case "@", Str = "atsign" break
+            case "#", Str = "pdsign" break
+            case "%", Str = "pcnt" break
+            case "^", Str = "crt" break
+            case "&", Str = "and" break
+            case "*", Str = "ast" break
+            case "-", Str = "min" break
+            case "+", Str = "plu" break
+            case "/", Str = "div" break
+            case "(", Str = "lpar" break
+            case ")", Str = "rpar" break
+            case "$", Str = "dlsign" break
+            case ".", Str = "prd" break
+            case ":", Str = "colon" break
+            case ":", Str = "colon" break
+            case ",", Str = "com" break
+            case ">", Str = "greaterthan" break
+            case "<", Str = "lessthan" break
+            case "[", Str = "lbracket" break
+            case "]", Str = "rbracket" break
+            case "{", Str = "lcbracket" break
+            case "}", Str = "rcbracket" break
+            case "~", Str = "tilde" break
+            case "_", Str = "underscore" break
+            case ";", Str = "scolon" break
+            case "\"", Str = "quote" break
+            case "=", Str = "equal" break
+            case "|", Str = "bar" break
+        }
+        
+        holoModel(I, "models/sprops/misc/alphanum/alphanum_" + Str + ".mdl")      
+        holoBodygroup(I, 0, 2)  
+        holoColor(I, teamColor(lastSpoke():team()))
+        holoAlpha(I, Str == " " ? 0 : 255)
+    }
+    
+    soundPurge()
+    #E:soundPlay("", 0, "/friends/message.wav")
+}
+elseif(clk())
+{
+    if(Move)
+    {
+        if(I == Max)
+        {   
+            for(I = 1, clamp(LS:count(), 0, Max))
+            {
+                Cur = curtime() * 150
+                S = sin(Cur - (I / (Max * 2)) * (360 * 10)) * 26
+        
+                holoPos(I, E:toWorld(vec(0 - (I * 14), 0, 10 + abs(S))))
+                holoAng(I, E:toWorld(ang(S, 0, 0)))
+            }
+        }
+    }
+    
+    interval(Update)
+}

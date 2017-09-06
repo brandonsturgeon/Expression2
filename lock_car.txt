@@ -1,0 +1,30 @@
+@name Car lock
+@inputs 
+@outputs 
+@persist 
+@trigger 
+if(first())
+{
+    hint("Locks car if you walk away from it.",5)
+    hint("Coded by Phatso727",7)
+    entity():setAlpha(0)
+}
+Vehicle = entity():isConstrainedTo()
+
+#If you get 700 units away from the vehicle..
+if(owner():pos():distance(Vehicle:pos())>700)
+{
+    #Lock the car, and kill current driver
+    Vehicle:lockPod(1)
+    Vehicle:killPod()
+    hint("Locked",2)
+}
+
+#Otherwise..
+else
+{
+    #Unlock the car
+    hint("Unlocked",2)
+    Vehicle:lockPod(0)
+}
+##Coded By Phatso727 avec <3

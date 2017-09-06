@@ -1,0 +1,45 @@
+@name Ghost Trails
+@persist [Subjects]:array
+@persist [Counter, Interval, Limit]:number
+@persist Target:entity TargetName:string 
+
+# Made by Phatso727
+# ily brandon <3 you're super awesome! c:
+if(first())
+{
+    Target = owner()
+    Interval = 25
+    Limit = 30
+    
+    # Function used to create/modify a new hologram for a given entity
+    function void makeGhost(C:number, E:entity)
+    {
+        holoCreate(C, E:pos())
+        holoModel(C, E:model())
+        holoSkin(C, E:getSkin())
+        holoAng(C, E:angles())
+        holoScaleUnits(C, E:boxSize())
+        holoAnim(C, E:getAnimation())
+        holoColor(C, E:getColor())
+    }
+    Counter = 1
+    
+    # Sets the initial hologram
+    makeGhost(Counter, Target)
+    Counter += 1
+}
+
+makeGhost(Counter, Target)
+
+Counter += 1
+if(Counter > Limit)
+{
+    for(I=0, Limit)
+    {
+        holoAlpha(Counter - Limit + I, I*(255 / Limit))
+    }
+    holoDelete(Counter - Limit)
+}
+
+
+interval(Interval)

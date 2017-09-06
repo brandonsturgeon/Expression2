@@ -1,0 +1,121 @@
+@name Rearrange
+@persist StartTable:table Count:number StartTableKeys:array 
+@persist StartTableCount Step MaxSteps Distance StartPos:vector 
+@persist SpawnTime Played ExplosionSounds:array MoveSounds:array
+@persist E:entity
+if(first())
+{
+    StartTable = table()
+    findIncludeClass("prop_*")
+    findInSphere(entity():pos(), 1500)
+    foreach(K, V:entity = findToArray())
+    {
+        StartTable[V:id():toString(), table] = table("ent" = V,
+                                                     "pos" = V:pos(),
+                                                     "material" = V:getMaterial(),
+                                                     "color" = V:getColor(),
+                                                     "alpha" = V:getAlpha())
+    }
+    Count = 1
+    Step = 100
+    Distance = 200
+    StartPos = entity():pos()
+    SpawnTime = curtime()
+    StartTableKeys = StartTable:keys()
+    StartTableCount = StartTableKeys:count()
+    ExplosionSounds = array("ambient/explosions/citadel_end_explosion1.wav",
+                            "ambient/explosions/citadel_end_explosion2.wav")
+    MoveSounds = array("npc/scanner/combat_scan1.wav",
+                       "npc/scanner/combat_scan2.wav",
+                       "npc/scanner/combat_scan3.wav",
+                       "npc/scanner/combat_scan4.wav",
+                       "npc/scanner/combat_scan5.wav",
+                       "npc/scanner/scanner_scan1.wav",
+                       "npc/scanner/scanner_scan2.wav",
+                       "npc/scanner/scanner_scan4.wav",
+                       "npc/scanner/scanner_scan5.wav")
+    E = noentity()
+    entity():setAlpha(0)
+    runOnChat(1)
+    
+    function number ownerLastSaid(S:string)
+    {
+        if(owner():lastSaid() == S &(owner():lastSaidWhen() > SpawnTime))
+        {
+            return 1
+        }
+        return 0
+    }
+} 
+
+
+if(ownerLastSaid("!random"))
+{
+    if(Count < StartTableCount)
+    {
+        if(StartTable:exists(E:id():toString()))
+        {
+            E:setMaterial(StartTable[E:id():toString(), table]["material", string])
+            E:setColor(StartTable[E:id():toString(), table]["color", vector])
+        }
+        E = StartTable[StartTableKeys[Count, string], table]["ent", entity]
+        E:setAlpha(255)
+        E:setMaterial("models/wireframe")
+        E:setColor(vec(255, 0, 0))
+        if(Count % 2 == 0)
+        {
+            soundStop(Count-2)
+            E:soundPlay(Count, 0, MoveSounds[randint(1, MoveSounds:count()), string])
+        }
+        
+        TargetInfo = StartTable[StartTableKeys[randint(1, StartTableCount), string], table]
+        E:setPos(TargetInfo["pos", vector])
+    
+        Count = Count + 1
+    }
+    else
+    {
+        E:setMaterial(StartTable[E:id():toString(), table]["material", string])
+        E:setColor(StartTable[E:id():toString(), table]["color", vector])
+    }
+}
+
+if(ownerLastSaid("!explode"))
+{
+    if(Played == 0)
+    {
+        soundPlay(1, 0, ExplosionSounds[randint(1, ExplosionSounds:count()), string])
+        Played = 1
+    }
+    if(Step >= 1)
+    {
+        foreach(K, T:table = StartTable)
+        {
+            E = T["ent", entity]
+            E:setPos(E:pos()-(StartPos - E:pos()):normalized()*(Distance/Step))
+            E:setAlpha(255/Distance*Step)
+    
+        }
+    }
+
+    Step = Step - 1
+}
+
+if(ownerLastSaid("!back"))
+{
+    foreach(K, T:table = StartTable)
+    {
+        E = T["ent", entity]
+        E:setPos(T["pos", vector])
+        E:setAlpha(T["alpha", number])
+        E:setMaterial(T["material", string])
+        E:setColor(T["color", vector])
+    }
+    Step = 100
+    Count = 1
+    Played = 0
+    soundStop(1)
+}
+
+interval(50)
+        

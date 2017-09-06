@@ -1,0 +1,30 @@
+@name Broom
+@inputs 
+@outputs Debug:angle BroomAngle
+@persist BroomAngle BroomPos:vector
+@trigger 
+if (first()){
+    holoCreate(1)
+    holoModel(1, "models/props_c17/pushbroom.mdl")
+    holoAng(1, ang(67, -31, 123))
+    holoPos(1, vec(0, 0, 60) + entity():pos())
+    
+    holoCreate(2)
+    holoAng(2, ang(0,0,0))
+    holoPos(2, vec(0,0,45) + entity():pos())
+    holoAlpha(2, 0)
+    holoParent(1, 2)
+    
+    BroomAngle = 0
+    BroomPos = vec(0,0,45) + entity():pos()
+    runOnTick(1)
+}
+
+BroomAngle -= 0.5
+if (BroomAngle < -40){
+    BroomAngle = 0
+    BroomPos = BroomPos + vec(cos(BroomAngle), 0, sin(BroomAngle))*15
+}
+
+holoAng(2, ang(BroomAngle, 0, 0))
+holoPos(2, BroomPos + vec(cos(BroomAngle), 0, sin(BroomAngle))*15)

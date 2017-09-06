@@ -1,0 +1,59 @@
+@name Stay Away
+@persist StartPos:vector Target:entity E:entity IsHome:number Props:array
+
+if(first())
+{
+    runOnTick(1)
+    StartPos = entity():pos()
+    E = entity():isConstrainedTo()
+    E:setMass(999999)
+    IsHome = 1
+    
+}
+
+# Gets the props into an array
+if(findCanQuery())
+{
+    findByClass("prop_physics")
+    Props = findToArray()
+}
+
+# Goes through all of the players and props
+foreach(Key, Player:entity = players())
+{
+    if(StartPos:distance(Player:pos())<400)
+    {
+        if ((Player:name() != "Phatso727") &(Player:name() != "snipars") &(Player:isAlive()) &(Player:pos():isInWorld()))
+        {
+            Target = Player
+            break
+        }
+    }
+}
+
+# If the target is a real thing, and they're within 400 blocks
+if(Target!=noentity() &(StartPos:distance(Target:pos())<400))
+{
+	# Oh yeah, and also if they're in the world
+	if(Target:pos():isInWorld())
+	{
+		# Launch at them
+		Dest = vec(Target:pos():x(), Target:pos():y(), Target:pos():z()+45)
+		Vec=(Dest-E:pos())*E:mass()*6
+		E:applyForce(Vec+$Vec*5)
+		IsHome = 0
+	}
+}
+
+# Otherwise, just set everything back to normal
+else{
+    Vec=(StartPos-E:pos())*E:mass()*6
+    E:applyForce(Vec+$Vec*5)
+    E:setPos(StartPos)
+    if(IsHome == 0)
+    {
+        IsHome = 1
+        #E:soundPlay(0, 0, "npc/ministrider/hunter_angry1.wav")
+    }
+}
+

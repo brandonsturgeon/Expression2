@@ -1,0 +1,113 @@
+@name AoE Sphere
+@persist ScaleSize:number TrackEnts:array FindNew:number FindStrings:array
+
+if(first())
+{
+    ScaleSize = 10
+    holoCreate(1, entity():pos(), vec(1,1,1))
+    holoScaleUnits(1, vec(2000/ScaleSize - 1, 2000/ScaleSize - 1, 1))
+    holoColor(1, vec(0, 0, 0))
+    holoModel(1, "hq_rcylinder_thin")
+    holoDisableShading(1, 1)
+    
+    holoCreate(2, entity():pos(), vec(1, 1, 1))
+    holoScaleUnits(2, vec(2000/ScaleSize, 2000/ScaleSize, 1500/ScaleSize))
+    holoColor(2, vec(255, 255, 255))
+    holoAlpha(2, 10)
+    holoModel(2, "hq_icosphere")
+    holoDisableShading(2, 1)
+    
+    FindStrings = array("prop_*", "player")
+    
+    FindNew = 1
+    TrackEnts = array()
+}
+
+holoPos(1, entity():pos())
+holoPos(2, entity():pos())
+
+if(FindNew == 20)
+{FindNew = 1}
+
+if(FindNew == 1 &(findCanQuery()))
+{
+    foreach(Key1, Findstring:string = FindStrings)
+    {
+       # print(Findstring)
+        if(findCanQuery())
+        {
+            findByClass(Findstring)
+            Entities = findToArray()
+        }
+        # Creating holograms for each player
+        foreach(Key, Entity:entity = Entities)
+        { 
+            # Failsafe
+            if(!perf())
+            {
+                break
+            }
+            else
+            {
+                K = Entity:id() + 2
+                if(!TrackEnts:exists(K))
+                {
+                    if(Entity:pos():distance(entity():pos()) <= 1000)
+                    {
+                        TrackEnts[K, entity] = Entity
+                        holoCreate(K)
+                        holoPos(K, (Entity:pos() - entity():pos()+vec(0, 0, 1))/ScaleSize + entity():pos())
+                        holoModel(K, Entity:model())
+                        holoScaleUnits(K, Entity:boxSize()/ScaleSize)
+                        holoMaterial(K, "models/debug/debugwhite")
+                        holoAng(K,Entity:angles())
+                        #holoAnim(K, Entity:getAnimation())
+                    }
+                    else
+                    {   
+                        TrackEnts:remove(K)
+                        holoDelete(K)
+                    }
+                }
+            }
+        }
+    }
+}
+FindNew += 1
+
+foreach(Key, Entity:entity = TrackEnts)
+{
+    if(!Entity:isValid())
+    {
+        print("Doesn't exist")
+        holoDelete(K)
+        TrackEnts:remove(K)
+    }
+    # Failsafe
+    if(!perf())
+    {
+        break
+    }
+    
+    else        
+    {
+        K = Entity:id() + 2
+        if(!Entity:isValid())
+        {
+            print("Doesn't exist")
+            holoDelete(K)
+            TrackEnts:remove(K)
+        }
+        else
+        {
+            holoPos(K, (Entity:pos() - entity():pos()+vec(0, 0, 1))/ScaleSize + entity():pos())
+            holoModel(K, Entity:model())
+            holoScaleUnits(K, Entity:boxSize()/ScaleSize)
+            holoMaterial(K, "models/debug/debugwhite")
+            holoAng(K,Entity:angles())
+            #holoAnim(K, Entity:getAnimation())
+        }
+    }
+}
+
+interval(100)

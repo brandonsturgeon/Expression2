@@ -1,0 +1,26 @@
+@name 
+@inputs 
+@outputs 
+@persist E:entity InitPos:vector
+@trigger 
+
+if(first())
+{
+    E = propSpawn("models/props_c17/FurnitureWashingmachine001a.mdl", 1)
+    InitPos = E:pos()
+}
+
+if(findCanQuery())
+{
+    findByClass("npc_tripmine")
+    A = findToArray()
+    if(A:count() > 0)
+    {
+        foreach(K, Mine:entity = A)
+        {
+            E:setPos(Mine:pos())
+        }
+    }
+    else{E:setPos(InitPos)}
+}
+interval(1000)

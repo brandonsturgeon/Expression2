@@ -1,0 +1,32 @@
+@name Money Printer Explosion Protection
+@inputs 
+@outputs 
+@persist Printer:entity Vec:vector
+@trigger 
+runOnTick(1)
+if(first())
+{
+    findByModel("models/props_c17/consolebox01a.mdl"),
+    Printer=findClosest(entity():pos())
+    
+}
+if(tickClk())
+{
+if(Printer:isOnFire())
+{
+    Dest = vec(Printer:pos():x(),Printer:pos():y(),Printer:pos():z()+9000)
+    Vec=(Dest-Printer:pos())*Printer:mass()*20
+        Printer:applyForce(Vec+$Vec*5)     
+}
+}
+
+# Needed to have these two seperate, otherwise the message spams.
+
+else
+{
+    if(Printer:isOnFire())
+{
+    hint("Printer on fire!",5)
+}
+}
+# Made by Phatso727

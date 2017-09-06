@@ -1,0 +1,15 @@
+@name walk speed pitch
+@inputs A:entity
+@persist Sound:string B:entity
+
+
+if(first()) {  
+    runOnTick(1)
+    B = owner()
+    Sound = "music/portal_still_alive.mp3"
+    timer("Reset",Sound:length()*1000)
+    B:soundPlay(1,0,Sound)
+}
+
+soundPitch(1, 0 + B:vel():length()/1.9)
+

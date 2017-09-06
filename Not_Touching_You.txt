@@ -1,0 +1,23 @@
+@name Not Touching You
+@persist Target:entity Props:table
+if(first())
+{
+    Target = findPlayerByName("peanut")
+    Props = table()
+    runOnTick(1)
+    
+    for(I=1, 3)
+    {
+        local Temp = propSpawn("models/hunter/blocks/cube075x075x075.mdl", 1)
+        Temp:setMass(50000)
+        Props[toString(I), table] = table(Temp, 100*I)
+    }
+}
+
+if(tickClk())
+{
+    foreach(K, V:table = Props)
+    {
+        V[1, entity]:setPos(vec(Target:pos():x(), Target:pos():y(), Target:pos():z()+V[2, number]))
+    }   
+}

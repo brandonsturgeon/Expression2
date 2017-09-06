@@ -1,0 +1,38 @@
+@name NoPewPew
+@inputs 
+@outputs 
+@persist E:entity
+@trigger 
+
+if(first())
+{
+    E = propSpawn("models/props_c17/FurnitureWashingmachine001a.mdl", 1)
+    E:setMass(9999999)
+    E:setAlpha(255)
+}
+
+A = array()
+if(findCanQuery())
+{
+    findByClass("pewpew_base_bullet")
+    A = findToArray()
+}
+
+if(A:count() > 0)
+{
+    foreach(K, Bullet:entity = A)
+    {
+        if(!perf() | (E == noentity()) | (Bullet == noentity()))
+        {break}
+        E:setPos(Bullet:pos())
+    }
+}
+
+if(E == noentity())
+{
+    E = propSpawn("models/props_c17/FurnitureWashingmachine001a.mdl", 1)
+    E:setMass(9999999)
+    E:setAlpha(255)
+}
+
+interval(1)

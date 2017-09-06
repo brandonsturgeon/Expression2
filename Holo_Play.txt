@@ -1,0 +1,44 @@
+@name Holo Sound Play
+@inputs 
+@outputs 
+@persist Sound:string
+@trigger 
+
+if(first())
+{
+    runOnTick(1)
+    Entity = entity()
+    A=lastSaid()
+    Sound = ""
+    
+    function holoPlay()
+    {
+        holoCreate(1, entity():pos(), vec())
+        holoParent(1, entity())
+        
+        holoCreate(2, entity():pos(), vec())
+        holoParent(2, entity())
+        
+        holoCreate(3, entity():pos(), vec())
+        holoParent(3, entity())
+        
+        holoCreate(4, entity():pos(), vec())
+        holoParent(4, entity())
+        
+        holoEntity(1):soundPlay(2,0,Sound)
+        holoEntity(2):soundPlay(3,0,Sound)
+        holoEntity(3):soundPlay(4,0,Sound)
+        holoEntity(4):soundPlay(5,0,Sound)
+    
+    }
+        
+    function stopSounds()
+    {
+        X = 1
+        while(X <= 5)
+        {
+            soundStop(X)
+            X = X + 1
+        }
+    }
+}

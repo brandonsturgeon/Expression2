@@ -1,0 +1,17 @@
+@name Wilfred
+@inputs 
+@outputs Screen:number
+@persist Wildred:entity Height:number
+@trigger 
+interval(1000)
+Wilfred=entity():isWeldedTo(1)
+Height=Wilfred:pos():z()
+findPlayerByName("Phatso727")
+findByModel("models/hunter/blocks/cube8x8x8.mdl")
+findToArray()
+Target=findClosest(entity():pos())
+    R=20
+    soundPlay(1,0,"/ambient/voices/squeal1.wav")
+    Dest = Target:pos()
+        Vec=(Dest-Wilfred:pos())*Wilfred:mass()*4000
+        Wilfred:applyForce(Vec) 

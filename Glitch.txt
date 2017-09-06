@@ -1,0 +1,73 @@
+@name Glitch
+@persist PlayerPosTable:table TeleAll TeleTarget:entity TeleCount
+
+# Teleports players backwards in time by 1-2 seconds in random intervals
+# By; Phatso727
+
+
+# Initial stuff
+if(first())
+{
+    # Options
+    TeleAll = 1 # Teleport everyone?
+    TeleTarget = findPlayerByName("Phatso") # Who to teleport if TeleAll = 0
+    
+    # Other stuff
+    PlayerPosTable = table()
+    foreach(K, Player:entity = players())
+    {
+        PlayerPosTable[Player:id(), array] = array()
+    }
+    TeleCount = 1
+}
+
+# Keeping track of everyone's position
+foreach(K, Player:entity = players())
+{
+    # Get their cooresponding array
+    local A = PlayerPosTable[Player:id(), array]
+    # If it's full, remove the oldest thing
+    if(A:count() == 3)
+    {
+        A:remove(1)
+    }
+    
+    # Add on their newest position to the end
+    A[A:count()+1, vector] = Player:pos()
+}
+
+# Every 3 seconds
+if(TeleCount == 3)
+{
+    # 50% chance to teleport
+    if(randint(1, 2) == 1)
+    {
+        # Everyone
+        if(TeleAll == 1)
+        {
+            # Loop through all players
+            foreach(K, Player:entity = players())
+            {
+                # Get their cooresponding array with their last 3 positions
+                local A = PlayerPosTable[Player:id(), array]
+                # Teleport them
+                Player:teleport(A[2, vector])
+            }
+        }
+        # Or specific person
+        else
+        {
+            # Get the array with their last 3 positions
+            local A = PlayerPosTable[TeleTarget:id(), array]
+            # Teleport them
+            TeleTarget:teleport(A[2, vector])
+        }
+    }
+    TeleCount = 1
+}
+else
+{
+    TeleCount = TeleCount + 1
+}
+
+interval(1000)

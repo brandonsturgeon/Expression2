@@ -1,0 +1,99 @@
+@name Analog Clock
+@persist Clock:entity ClockOuter:entity SecondHand:entity SecondHandIndex:number IndexAt:number
+@persist MinuteHand:entity MinuteHandIndex:number HourHand:entity HourHandIndex:number SysTime Seconds
+
+# Created by Phatso727
+
+# First stuff
+if( first() )
+{
+    #Functions
+    function entity createHolo(Pos:vector, Scale:vector, Ang:angle, Color:vector, Model:string)
+    {
+        IndexAt++
+        local Holo = holoCreate(IndexAt, Pos, Scale, Ang, Color)
+        holoModel(IndexAt, Model)
+        holoShadow(IndexAt, 0)
+        holoDisableShading(IndexAt, 0)
+        holoParent(IndexAt,entity())
+        return Holo
+    }    
+    IndexAt = 0
+    
+    # Visual Stuff
+    Clock = createHolo(entity():pos(), vec(6, 6, 0.26), ang(90, 90, 0), vec(255, 255, 255), "hq_cylinder")
+    ClockOuter = createHolo(entity():pos(), vec(6.5, 6.5, 2), ang(90, 90, 0), vec(0, 0, 0), "hq_torus")
+    Center = createHolo(entity():pos(), vec(0.5, 0.5, 0.5), ang(0, 0, 90), vec(0, 0, 0), "hq_dome")
+    SecondHand = createHolo(entity():pos(), vec(0.2, 2.5, 0.1), ang(90, 90, 0), vec(255, 0, 0), "cube")
+    SecondHandIndex = IndexAt
+    MinuteHand = createHolo(entity():pos(), vec(0.2, 2.5, 0.1), ang(90, 90, 0), vec(0, 255, 0), "cube")
+    MinuteHandIndex = IndexAt
+    HourHand = createHolo(entity():pos(), vec(0.2, 1.5, 0.1), ang(90, 90, 0), vec(0, 0, 255), "cube")
+    HourHandIndex = IndexAt
+    
+
+    # Creates the Hour-Notches
+    local RollCounter = 0
+    for(I=0, 11)
+    {
+        local BarWid = 0.15
+        local BarLen = 0.5
+        
+        # Checks if it's 12, 3, 6, or 9 so we can make the bar bigger
+        if(mod(I, 3) == 0)
+        {
+            BarWid = 0.2
+            BarLen = 0.6
+        } 
+        local NewPos = vec(entity():pos():x()+(sin(RollCounter)*32), entity():pos():y()-1, entity():pos():z()+(cos(RollCounter)*32))
+        createHolo(NewPos, vec(BarLen, BarWid, 0.15), ang(RollCounter+90, 0, 90), vec(0, 0, 0), "cube")
+        RollCounter= RollCounter + 30
+    }
+    
+    # Creates the minute-stubs
+    RollCounter = 0
+    for(I=0, 59)
+    {
+        if(!mod(I, 5) == 0)
+        {
+            local NewPos = vec(entity():pos():x()+(sin(RollCounter)*32), entity():pos():y()-1, entity():pos():z()+(cos(RollCounter)*32))
+            createHolo(NewPos, vec(0.3, 0.1, 0.15), ang(RollCounter+90, 0, 90), vec(175, 175, 175), "cube")
+            holoDisableShading(IndexAt, 0)
+        }
+        RollCounter= RollCounter + 6
+    }
+}
+
+# Creates the time
+local Tbl = date()    
+local Seconds = Tbl["sec",number]
+local Minutes = Tbl["min",number]
+local Hours = Tbl["hour",number]
+if(changed(Seconds))
+{
+    entity():soundPlay(1, 0.1, "checkem/pp_pop.mp3")
+    #Seconds = Tbl["sec",number]
+}
+#else{
+   # SysTime = systime()
+  #  local DeltaTime = $SysTime
+ #   Seconds = Seconds + DeltaTime
+#}
+
+
+# Positions and rotates the Hands
+
+# Seconds
+holoPos(SecondHandIndex,entity():toWorld(vec(sin(Seconds*6)*12,-1,cos(Seconds*6)*12)))
+holoAng(SecondHandIndex,entity():toWorld(ang(0, 90,90+Seconds*6)))
+
+# Minutes
+holoPos(MinuteHandIndex,entity():toWorld(vec(sin(Minutes*6)*12,-1,cos(Minutes*6)*12)))
+holoAng(MinuteHandIndex,entity():toWorld(ang(0, 90,90+Minutes*6)))
+
+# Hours
+holoPos(HourHandIndex,entity():toWorld(vec(sin(Hours*30)*12,-1,cos(Hours*30)*12)))
+holoAng(HourHandIndex,entity():toWorld(ang(0, 90,90+Hours*30)))
+interval(1000)
+
+

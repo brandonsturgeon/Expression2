@@ -1,0 +1,20 @@
+@name Foodstamps
+@persist Model:string P:entity Ply:entity
+@model models/props_c17/consolebox01a.mdl
+
+if(first())
+{
+    Model = "models/props_junk/garbage_newspaper001a.mdl"
+}
+
+foreach(K, Ply:entity = players())
+{
+    if(Ply:keyUse() &(Ply:aimEntity() == entity()))
+    {
+        P = propSpawn(Model, 0)
+        P:setOwner(Ply)
+        concmd("say Foodstamps for: "+Ply:name())
+    }
+}
+
+interval(1000)

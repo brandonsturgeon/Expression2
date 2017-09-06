@@ -1,0 +1,213 @@
+@name Phatty Bird
+@inputs Screen:wirelink
+@outputs Ops
+@persist Change:number Use Playing 
+@persist Cursor:vector2 JumpHeight DefChange ChangePer
+@persist CloudSpeed PipeSpeed PipeDistance Score
+@persist PipeWidth
+
+if(first() | duped())
+{
+    # Options
+    JumpHeight = 9      # How far the bird jumps each tick.   Default: 9
+    DefChange = -2      # Default bird falling speed.         Default: -2
+    ChangePer = 0.4     #How much the bird falls each tick.   Default: 0.4
+    PipeDistance = 400  # Vertical distance between pipes.    Default: 400
+    PipeWidth = 50      # How wide the pipes are.             Default: 50
+    CloudSpeed = 2      # How much the clouds move each tick. Default: 2
+    PipeSpeed = 3       # How much the pipe moves each tick.  Default: 3
+    
+    BirdColor = vec(0, 255, 63)                              #Default: vec(0, 255, 63)
+    PipeColor = vec(0, 0, 255)                               #Default: vec(255, 0, 0)
+    
+    
+    # Initial Variables
+    Score = 0
+    Playing = 0
+    SizeMod = 2
+    Change = DefChange
+    
+    
+    Screen:egpClear()
+    Screen:egpDrawTopLeft(1)
+    # Sky
+    Screen:egpBox(22, vec2(0, 0), vec2(512, 172)*SizeMod)
+    Screen:egpColor(22, vec(0, 255, 255))
+    
+    # Ground
+    Screen:egpBox(21, vec2(0, 344), vec2(512, 172)*SizeMod)
+    Screen:egpColor(21, vec(139,69,19))
+    
+    #Creating the Clouds
+    #for(I=6, 11)
+    #{
+    #    Screen:egpCircle(I, vec2(randint(1, 1100), randint(20, 100)), vec2(50, 25))
+    #}
+    
+    # Bird
+    Screen:egpWedge(20, vec2(103, 256), vec2(15, 15))
+    Screen:egpColor(20, BirdColor)
+    Screen:egpFidelity(20, 3)
+    
+    # Bird outline
+    Screen:egpWedgeOutline(19, vec2(103, 256), vec2(15, 15))
+    Screen:egpColor(19, vec(0, 0, 0))
+    Screen:egpFidelity(19, 3)
+    
+    # Creating the pipes
+    for(I=1, 4)
+    {
+        Screen:egpBox(I, vec2(-200, 0), vec2(PipeWidth, 256))
+        Screen:egpColor(I, PipeColor)
+    }
+    # Positioning the pipes
+    for(I=1, 2)
+    {
+        Screen:egpPos(I, vec2(randint(800, 1412), randint(300, 400)))
+        Screen:egpPos(I+2, Screen:egpPos(I) - vec2(0, PipeDistance))
+    }
+    
+    # Score
+    Screen:egpText(18, "Score: " + toString(Score), vec2(0, 0))
+    Screen:egpColor(18, vec(0, 0, 0))
+    
+    # Paused Text
+    Screen:egpText(17, "PAUSED", vec2(200, 200))
+    Screen:egpText(16, "Look at the screen to resume", vec2(130, 300))
+    Screen:egpText(15, "Phatty Bird", vec2(187, 100))
+    
+    Screen:egpColor(17, vec(255, 0, 0))
+    Screen:egpColor(16, vec(255, 0, 0))
+    Screen:egpColor(15, vec(255, 0, 0))
+    
+    
+}
+
+Cursor = Screen:egpCursor(owner())
+
+# Pauses the game if you're not looking at the screen
+
+if(Playing)
+{
+    if(Cursor == vec2(-1, -1))
+    {
+        Playing = 0
+        Screen:egpAlpha(17, 255)
+        Screen:egpAlpha(16, 255)
+        Screen:egpAlpha(15, 255)
+    }
+}
+else
+{
+    if(Cursor != vec2(-1, -1))
+    {
+        Playing = 1
+        Screen:egpAlpha(17, 0)
+        Screen:egpAlpha(16, 0)
+        Screen:egpAlpha(15, 0)
+    }
+}
+
+
+# Main game stuff
+if(Playing)
+{
+    Screen:egpDrawTopLeft(1)
+    Use = owner():keyUse()
+    Screen:egpSetText(18, "Score: " + toString(Score))
+    
+    Change -= ChangePer
+    
+    # Jumping
+    if($Use == 1 &(Change < 3))
+    {
+        Change = JumpHeight
+    }
+    Screen:egpPos(20, Screen:egpPos(20) - vec2(0, Change))
+    Screen:egpPos(19, Screen:egpPos(20))
+    
+    # Angling, if it's greater than -JumpHeight we use this formula
+    if(Change > -JumpHeight)
+    {
+        Screen:egpAngle(20, ((89/JumpHeight) * Change))
+    }
+    # Otherwise stick it at -89, because Change can be lower than -10 
+    #which means the bird starts to rotate around 
+    else
+    {
+        Screen:egpAngle(20, -89)
+    }
+    Screen:egpAngle(19, Screen:egpAngle(20))
+    
+    # Moving the clouds -- Disabled for performance
+    #for(I=6, 11)
+    #{
+       # Screen:egpPos(I, Screen:egpPos(I) - vec2(CloudSpeed, 0))
+       # if(Screen:egpPos(I)[1] <= -45)
+       # {
+       #     Screen:egpPos(I, vec2(randint(525, 1100), randint(20, 100)))
+       # }
+    #}
+    
+    # Moving the pipes and checking for colisions
+    for(I=1, 2)
+    {
+        Screen:egpPos(I, Screen:egpPos(I) - vec2(PipeSpeed, 0))
+        Screen:egpPos(I+2, Screen:egpPos(I+2) - vec2(PipeSpeed, 0))
+        
+        # If pipe goes off screen
+        if(Screen:egpPos(I)[1] <= -110)
+        {
+            Screen:egpPos(I, vec2(randint(512, 1000), randint(300, 400)))
+            Screen:egpPos(I+2, Screen:egpPos(I) - vec2(0, PipeDistance))
+        }
+        
+        # Colision testing
+        # Takes current position + the x size of the bird to get the furthest right point on bird
+        local Pos = Screen:egpPos(20)
+        local Min = Screen:egpPos(I)
+        local Max = Screen:egpSize(I) + Min
+        if(inrange(Pos, Min, Max))
+        {
+            reset()
+        }
+        
+        local Min = Screen:egpPos(I+2)
+        local Max = Screen:egpSize(I+2) + Min
+        if(inrange(Pos, Min, Max))
+        {
+            reset()
+        }
+        
+        # Check if the player gets points
+        local Low = Screen:egpPos(20)[1] - (PipeSpeed/2)
+        local High = Screen:egpPos(20)[1] + (PipeSpeed/2)
+        if(inrange(Screen:egpPos(I)[1], Low, High))
+        {
+            Score += 1
+        }
+    }
+            
+    
+    # Bird off screen
+    if(Screen:egpPos(20)[2] > 540 | Screen:egpPos(20)[2] < -30)
+    {
+        reset()
+    }
+    
+
+}
+
+
+if(changed(Score))
+{
+    Screen:egpRemove(18)
+    # Score
+    Screen:egpText(18, "Score: " + toString(Score), vec2(0, 0))
+    Screen:egpColor(18, vec(0, 0, 0))
+}
+
+Ops = ops()
+
+interval(15)
+    

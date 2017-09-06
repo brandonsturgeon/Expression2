@@ -1,0 +1,26 @@
+@name SphereSpawn
+@inputs 
+@outputs 
+@persist ModelString:string LastArray:array
+@trigger 
+
+if(first())
+{
+    ModelString = "models/props_c17/FurnitureWashingmachine001a.mdl"
+    InitialModel1 = propSpawn(ModelString, 0)
+    InitialModel2 = propSpawn(ModelString, 0)
+    LastArray = array(InitialModel1, InitialModel2)
+}
+
+NewArray = array()
+foreach(K, V:entity = LastArray)
+{
+    local A = propSpawn(ModelString, 0)
+    A:soundPlay(K, 0, "garrysmod/content_downloaded.wav")
+    A:setPos(V:pos())
+    NewArray[NewArray:count()+1, entity] = A
+    NewArray[NewArray:count()+1, entity] = propSpawn(ModelString, 0)
+}
+LastArray = NewArray
+    
+interval(1000)

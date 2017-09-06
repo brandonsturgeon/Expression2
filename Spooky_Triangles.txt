@@ -1,0 +1,22 @@
+@name Spooky Triangles
+@inputs Input
+@outputs Cur_point:vector Cur1 Cur2 Cur3 Color:vector
+@persist Point1:vector Point2:vector Point3:vector Cur_point:vector Arr:array 
+@trigger 
+runOnTick(1)
+if(first())
+{
+    Point1 = vec(200, 200, 10)
+    Point2 = vec(0, 0, 10)
+    Point3 = vec(200, 0, 10)
+    Arr = array(Point1, Point2, Point3)
+    Cur_point = Point1
+}
+if(Input)
+{
+	Color = vec(randint(1, 255), randint(1, 255), randint(1, 255))
+	Calc_point = Arr[randint(1, 3), vector]
+	CalX = ((Cur_point[1] + Calc_point[1])/2)
+	CalY = ((Cur_point[2] + Calc_point[2])/2)
+	Cur_point = vec(CalX, CalY, 100)
+}

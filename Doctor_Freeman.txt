@@ -1,0 +1,79 @@
+@name Doctor Freeman
+@outputs SA:table SN Time Debug Target:entity V:vector
+@persist SA:table SN:number Time:number NPCFIND:array PLAYER:entity
+if(first())
+{
+    SN = 0
+    SA[1,table] = table("vo/outland_02/junction/gman_mono24.wav", 0.737)
+    SA[2,table] = table("vo/outland_02/junction/gman_mono01.wav", 3.794)
+    SA[3,table] = table("vo/outland_02/junction/gman_mono02.wav", 7.41)
+    SA[4,table] = table("vo/outland_02/junction/gman_mono03.wav", 7.639)
+    SA[5,table] = table("vo/outland_02/junction/gman_mono04.wav", 1.591)
+    SA[6,table] = table("vo/outland_02/junction/gman_mono05.wav", 4.017)
+    SA[7,table] = table("vo/outland_02/junction/gman_mono06.wav", 10.228)
+    SA[8,table] = table("vo/outland_02/junction/gman_mono08.wav", 16.904)
+    SA[9,table] = table("vo/outland_02/junction/gman_mono09.wav", 10.228)
+    SA[10,table] = table("vo/outland_02/junction/gman_mono10.wav", 2.543)
+    SA[11,table] = table("vo/outland_02/junction/gman_mono11.wav", 5.706)
+    SA[12,table] = table("vo/outland_02/junction/gman_mono12.wav", 4.748)
+    SA[13,table] = table("vo/outland_02/junction/gman_mono13.wav", 1.55)
+    SA[14,table] = table("vo/outland_02/junction/gman_mono14.wav", 2.397)
+    SA[15,table] = table("vo/outland_02/junction/gman_mono15.wav", 1.583)
+    SA[16,table] = table("vo/outland_02/junction/gman_mono16.wav", 1.144)
+    SA[17,table] = table("vo/outland_02/junction/gman_mono17.wav", 5.654)
+    SA[18,table] = table("vo/outland_02/junction/gman_mono22.wav", 4.702)
+    SA[19,table] = table("vo/outland_02/junction/gman_mono24.wav", 0.737)
+    SA[20,table] = table("vo/outland_02/junction/gman_mono25.wav", 4.197)
+    SA[21,table] = table("vo/outland_02/junction/gman_mono26.wav", 3.762)
+    SA[22,table] = table("vo/outland_02/junction/gman_mono27.wav", 1.95)
+    SA[23,table] = table("vo/outland_02/junction/gman_mono28.wav", 1.492)
+    SA[24,table] = table("vo/outland_02/junction/gman_mono29.wav", 0.894)
+    SA[25,table] = table("vo/outland_02/junction/gman_mono30.wav", 1.016)
+    SA[26,table] = table("vo/outland_02/junction/gman_mono31.wav", 2.132)
+    SA[27,table] = table("vo/outland_02/junction/gman_mono32.wav", 5.132)
+    SA[28,table] = table("vo/outland_02/junction/gman_mono33.wav", 2.717)
+    SA[29,table] = table("vo/outland_02/junction/gman_mono34.wav", 5.204)
+    
+    findSortByDistance(entity():pos())
+    findByClass("player")
+    PLAYER = findClosest(entity():pos())
+    findSortByDistance(entity():pos())
+    findByClass("npc_*")
+    NPCFIND = findToArray()
+
+    timer("timer", 10)
+}
+
+
+
+
+
+foreach(K, V:entity = NPCFIND)
+{
+    if(V:owner() == owner())
+    {
+        V:npcFace(PLAYER:pos())
+    }
+}
+ 
+if(clk("timer"))
+{
+    Time = 0
+    SN++
+    if(SN==SA:count()+1)
+    {
+        SN = 1
+    }
+    Interval = SA[SN,table][2,number]*1000
+    foreach(K, V:entity = NPCFIND)
+    {
+        if(V:owner() == owner())
+        {
+            V:npcFace(PLAYER:pos())
+            V:npcSetTarget(PLAYER)
+            V:soundPlay(K, 0, SA[SN,table][1,string])
+        }
+    }
+    timer("timer", Interval)
+}
+interval(100)

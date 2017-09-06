@@ -1,0 +1,294 @@
+@name Phatso Says
+@inputs EGP:wirelink
+@outputs Score PlaybackSpeed
+@persist Moves:array PlayerMoves:array Cursor:vector2
+@persist Counter:number Use SoundArr:array Community  ColArr:array
+@persist Owner:entity Hardcore PlaybackSpeed DefaultPlaybackSpeed 
+@persist SpeedChange Sound Cheat
+
+if(first())
+{
+    # Options
+    
+    # Play sounds? Default: 1
+    Sound = 1
+    
+    # Allow other people to hit E on your chip and start playing? Default: 0
+    Community = 1
+    
+    # The game starts over when you mess up. Default: 0
+    Hardcore = 0
+    
+    # How many boxes per second? Default: 2
+    DefaultPlaybackSpeed = 2
+    PlaybackSpeed = DefaultPlaybackSpeed
+    
+    # How much the speed changes every turn. 0 for none. Default: 0.025
+    SpeedChange = 0.05
+    
+    # This is for "testing"
+    Cheat = 0
+    
+    
+    # Compares 2 arrays to test for equality
+    function number compareArray(Ar1:array, Ar2:array)
+    { 
+        # If they're not the same length, look no further
+        if(Ar1:count() != Ar2:count())
+        {
+            return 0
+        }
+        
+        else
+        {
+            # Walk through each index and compare them
+            for(I=1, Ar1:count())
+            {
+                if(Ar1[I, number] != Ar2[I, number])
+                {
+                    return 0
+                }
+            }
+            # No reason to return 0, they're equal
+            return 1
+        }
+    }
+    
+    # Gets the next step
+    function number nextOne(Last:number)
+    {
+        # Tries to randomly select a number that isn't the same as the last one
+        # Incriment Safety, we can try a max of 25 times to get a non-repeated
+        # number before we just say "hell with it" and return 1
+        # There's a 1 in 1.12589991e15 chance that it would ever have a repeated square
+        local Safety = 0
+        while(1)
+        {
+            if(Safety >= 25)
+            {
+                return 1
+                break
+            }
+            
+            local Randint = randint(1, 4)
+            if(Randint != Last)
+            {
+                return Randint
+            }
+            Safety += 1
+        }
+    }
+    
+    EGP:egpClear()
+    GridPos = array()
+    local X = 4
+    local Y = 4
+    # Colors go [Green, Red]
+    #           [Yellow, Blue]
+    # This array assigns colors based on the indexes
+    ColArr = array(vec(0, 255, 0), # Topleft
+                       vec(255, 0, 0), # Topright
+                       vec(255, 255, 0), # Botleft
+                       vec(0, 255, 255)) # Botright
+                        
+    SoundArr = array("synth/25_pwm_440.wav", # Topleft
+                     "synth/25_pwm_880.wav", # Topright
+                     "synth/75_pwm_1760.wav", # Botleft
+                     "synth/sine_880.wav") # Botright
+    
+    
+    # Generates grid
+    for(I=1, 4)
+    {
+        # 4 outlines, 4 boxes. Index of boxes are 10 higher than the outlines
+        EGP:egpDrawTopLeft(1)
+        EGP:egpBoxOutline(I, vec2(X, Y), vec2(250, 250))
+        EGP:egpColor(I, ColArr[I, vector]) # Gets color from ColArr
+        
+        EGP:egpBox(I+10, vec2(X, Y), vec2(250, 250))
+        EGP:egpColor(I+10, ColArr[I, vector]) # Gets color from ColArr
+        EGP:egpAlpha(I+10, 0)
+        
+        # Position of each square - Used for collision testing
+        GridPos[I, vector2] = vec2(X, Y)
+        
+        X += 254
+        if(X == 512)
+        {
+            X = 4
+            Y += 254
+        }
+    }
+    # Circle parented to your cursor
+    # Turns white when you can make a move, grey when the pattern is being
+    # shown to you
+    EGP:egpCircle(20, vec2(0, 0), vec2(5, 5))
+    EGP:egpColor(20, vec(255, 255, 255))
+    EGP:egpParentToCursor(20)
+    Counter = 1
+    Moves = array(randint(1, 3))
+    PlayerMoves = array()
+    Owner = owner()
+}
+
+Cursor = EGP:egpCursor(Owner)
+
+Use = Owner:keyUse()
+
+# Counter is only != 0 when we're incrimenting through moves
+# These are all of the checks for when user is making a move
+if(Counter == 0)
+{
+    if(Cheat)
+    {
+        local CurNum = Moves[PlayerMoves:count()+1, number]
+        local Color = ColArr[CurNum, vector]
+        EGP:egpColor(20, Color)
+    }
+    else
+    {
+        EGP:egpColor(20, vec(255, 255, 255))
+    }
+    
+    # If the Use key is JUST being pressed
+    if($Use == 1)
+    {
+        # Loop through all of the boxes to check for collisions
+        for(I=1, 4)
+        {
+            local Pos = EGP:egpPos(I)
+            local Size = EGP:egpSize(I)
+            if(inrange(Cursor, Pos, Pos+Size))
+            {
+                # If we find a collision, add it to our PlayerMoves array
+                EGP:egpAlpha(I+10, 255)
+                if(Sound)
+                {entity():soundPlay(2, 0, SoundArr[I, string])}
+                PlayerMoves[PlayerMoves:count()+1, number] = I
+            }
+            else
+            {
+                EGP:egpAlpha(I+10, 0)
+            }
+        }
+        
+    }
+    else
+    {
+        soundStop(2)
+        # Clearing the screen
+        for(I=1, 4)
+        {
+            EGP:egpAlpha(I+10, 0)
+        }
+    }
+    
+    
+    # Don't need to check these if we haven't made a valid move yet
+    # Gotta save them ops, what with most of them being homosexual and all
+    if(PlayerMoves:count() > 0)
+    {
+        # If we mess up, play a spooky sound and play the pattern again
+        if(PlayerMoves[PlayerMoves:count(), number] != Moves[PlayerMoves:count(), number])
+        {
+            if(Sound)
+            {entity():soundPlay(1, 0, "alarms/klaxon1.wav")}
+            PlayerMoves = array()
+            Counter = 1
+            if(Hardcore == 1)
+            {
+                hint("Score: "+Moves:count(), 5)
+                Moves = array(randint(1, 4))
+                PlaybackSpeed = DefaultPlaybackSpeed
+                
+            }
+        }
+        else
+        {
+            # Otherwise, if we do the whole pattern correct, add a new step and show it to the player
+            if(compareArray(PlayerMoves, Moves) == 1)
+            {
+                Moves[Moves:count()+1, number] = nextOne(Moves[Moves:count(), number])
+                PlayerMoves = array()
+                Counter = 1
+                PlaybackSpeed += SpeedChange
+            }
+        }
+    }
+    interval(50)
+}
+
+# This is for when we're showing the pattern
+else
+{
+    soundStop(2)
+    
+    # If we've hit the last one, then we're done showing the pattern
+    if(Counter > Moves:count())
+    {
+        Counter = 0
+        interval(1)
+    }
+    
+    # If we're still showing the pattern
+    else{
+        
+        # Set the outline color to be grey
+        EGP:egpColor(20, vec(100, 100, 100))
+    
+         # Turn all of the boxes invisible
+        for(I=1, 4)
+        {
+            EGP:egpAlpha(I+10, 0)
+        }
+        # Looping through the moves to show the player
+        Change = Moves[Counter, number]
+        
+        # Loop through the boxes and show them in order to the player
+        for(I=1, 4)
+        {
+            if(Change == I)
+            {
+                EGP:egpAlpha(I+10, 255)
+                if(Sound)
+                {entity():soundPlay(2, 0.1, SoundArr[I, string])}
+            }
+            else
+            {
+                EGP:egpAlpha(I+10, 0)
+            }
+        }
+    
+        # Incriment
+        Counter += 1
+        interval(1000/PlaybackSpeed)
+    }
+}
+
+# Looping through all of the players
+if(Community == 1)
+{
+    foreach(K, Player:entity = players())
+    {
+        # Are they within 100 units?
+        if(Player:pos():distance(entity():pos()) < 100)
+        {
+            # Are they pressing E on the chip?
+            if(Player:keyUse() & Player:aimEntity() == entity())
+            {
+                # If so, CONGRATS, they're the brand new owner of a Phatso Says chip
+                Owner = Player
+                reset()
+            }
+        }
+    }
+}
+else
+{
+    if(owner():keyUse() & owner():aimEntity() == entity())
+    {reset()}
+}
+
+# Sets the score. Should probably be moved somewhere else.
+if(!Cheat)
+{Score = Moves:count()-1}

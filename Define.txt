@@ -1,0 +1,63 @@
+@name Define
+@persist URL:string Data:string Chat:array Search:string
+
+#By Muhs
+#2011.1.30
+#wire_expression2_concmd 1
+#wire_expression2_concmd_whitelist say
+
+if (first() | duped()) {
+    runOnHTTP(1)
+    runOnChat(1)
+    URL = "http://www.merriam-webster.com/dictionary/"
+}
+
+if (chatClk()) {
+    Chat = lastSaid():explode(" ")
+    if (Chat[1,string] == "define") {
+        for (I = 0, Chat:count()) {
+            Search += Chat[I+2,string]
+        }
+        timer("request",1)
+    }
+}
+
+if (clk("request")) {
+    if (httpCanRequest()) {
+        hint("Requesting!",3)
+        httpRequest(URL + Search)
+    } else {
+        hint("Cannot request!",3)
+        timer("request",500)
+    }
+}
+
+if (httpClk()) {
+    hint("httpClk()",3)
+    Data = httpData()
+    if (Data != "") {
+        if (Data:find("headword")) {
+            Data = "found it"
+            timer("say",600)
+        } else {
+            timer("fail",600)
+        }
+    } else {
+        timer("error",600)
+    }
+}
+
+if (clk("say")) {
+    print(Data)
+    reset()
+}
+
+if (clk("fail")) {
+    print("No definitions were found.")
+    reset()
+}
+
+if (clk("error")) {
+    print("say An error occured!")
+    reset()
+}

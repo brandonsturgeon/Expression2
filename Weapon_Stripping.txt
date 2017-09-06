@@ -1,0 +1,16 @@
+@name Stay Stripped
+@inputs 
+@outputs 
+@persist Target:entity
+@trigger 
+interval(100)
+if(first())
+{
+    Target = findPlayerByName("phatso")
+}
+
+
+if(Target:weapon():isValid() == 1)
+{
+    concmd("ulx strip "+Target:name())
+}

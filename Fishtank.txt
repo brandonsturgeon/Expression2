@@ -1,0 +1,130 @@
+@name 
+@inputs CornerA:vector CornerB:vector
+@outputs Debug
+@persist FillPercent NumFish Warned SwimSpeed FishEyeChange UseTank
+@persist TankPos:vector TankBox:vector TankCenterFloor:vector WaterBox:vector WaterPos:vector
+@persist SwimmableWater:vector SwimmableMin:vector SwimmableMax:vector
+@persist LastI
+@trigger 
+
+interval(10)
+
+if (first()){
+    FillPercent = 0.95
+    NumFish = 15 #15 seems to be about the point where the ticks get close to the edge
+    FishEyeChange = 8 #probably between 5 and 15
+    SwimSpeed = 2 #recommended between 1 and 10
+    UseTank = 1
+}
+
+if (first()){
+    function number isBetween(X, NumberA, NumberB){
+        if (X > NumberA){
+            if (X < NumberB){
+                return 1
+            }
+        }
+        if (X < NumberA){
+            if (X > NumberB){
+                return 1
+            }
+        }
+        return 0
+    }
+    
+    function number vector:isBetween(VectorA:vector, VectorB:vector){
+        if (isBetween(This:x(), VectorA:x(), VectorB:x()) == 1){
+            if (isBetween(This:y(), VectorA:y(), VectorB:y()) == 1){
+                if (isBetween(This:z(), VectorA:z(), VectorB:z()) == 1){
+                    return 1
+                }
+            }
+        }
+        return 0
+    }
+
+    TankPos = (CornerA + CornerB)/2
+    TankBox = CornerA - CornerB
+    TankBox = vec(abs(TankBox:x()), abs(TankBox:y()), abs(TankBox:z()))
+    TankCenterFloor = TankPos:setZ(TankPos:z() - TankBox:z()*0.5)
+    
+    #x and y should be scaled by 0.9 but are scaled by 0.899 to reduce the clipping render error between holos
+    WaterBox = TankBox:setZ(TankBox:z()*FillPercent):setX(TankBox:x()*0.899):setY(TankBox:y()*0.899)
+    WaterPos = TankPos + vec(0, 0, 2.5*1.5 - (TankBox:z() - WaterBox:z())/2)
+    
+    SwimmableWater = WaterBox - vec(10, 10, 10)
+    SwimmableMin = WaterPos - SwimmableWater/2
+    SwimmableMax = WaterPos + SwimmableWater/2
+    
+    if ((SwimmableWater:x() <= 0) | (SwimmableWater:x() <= 0) | (SwimmableWater:x() <= 0)){
+        if (Warned == 0){
+            hint("The tank is too small...", 15)
+            Warned = 1
+        }
+    }else{
+        Warned = 0
+    }
+    
+    LastI = 1
+}
+
+if (first()){
+    if (UseTank){
+        #tank
+        holoCreate(1)
+        holoAng(1, ang(0,0,0))
+        holoModel(1, "hq_stube_thin")
+        holoPos(1, TankPos)
+        holoScaleUnits(1, TankBox*-1)
+        holoAlpha(1, 80)
+        holoColor(1, vec(150, 150, 150))
+        
+        #tank base
+        holoCreate(2)
+        holoAng(2, ang(0,0,0))
+        holoPos(2, TankCenterFloor + vec(0, 0, 2.5))
+        holoScaleUnits(2, TankBox:setZ(5))
+        holoColor(2, vec(0,0,0))
+        
+        #tank water
+        holoCreate(3)
+        holoAng(3, ang(0,0,0))
+        holoPos(3, WaterPos)
+        holoScaleUnits(3, WaterBox)
+        holoAlpha(3, 30)
+        holoColor(3, vec(25, 15, 200))
+        holoMaterial(3, "models/props_combine/com_shield001a")
+    }
+    
+    #create fishies
+    for(I = 1, NumFish){
+        holoCreate(I + 3)
+        holoAng(I + 3, ang(0,0,0))
+        holoPos(I + 3, WaterPos)
+        holoModel(I + 3, "models/props/de_inferno/goldfish.mdl")
+    }
+}else{
+
+    #swim fishies
+    for(I = LastI, NumFish){
+        if (perf()){
+            LastI = I
+            break
+        }else{
+            LastI = 1
+        }
+        Fish = holoEntity(I + 3)
+        
+        NewPos = Fish:pos() + Fish:eye()*random()*SwimSpeed
+        if (NewPos:isBetween(SwimmableMin, SwimmableMax) == 1){
+            holoPos(I + 3, NewPos)
+        }else{
+            holoAng(I + 3, Fish:angles() + ang(180, 0, 0))
+        }
+        
+        EyeAdjustment = ang(randint(-FishEyeChange, FishEyeChange), randint(-FishEyeChange, FishEyeChange), randint(-FishEyeChange, FishEyeChange))
+        NewAngles = Fish:angles() + EyeAdjustment
+        
+        holoAng(I + 3, NewAngles)
+    }
+}

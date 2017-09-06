@@ -1,0 +1,271 @@
+@name Barrel Game
+@inputs 
+@outputs Points:number TotalMissed:number MissedStreak:number
+@outputs PX:number PY:number PZ:number
+@persist Barrel:entity Color:vector Seconds:number Distance:number Material:string
+@persist Points:number Pos:vector SpawnSound:string GroundOnly:number Center:entity
+@persist Frozen:number Chip:entity Owner:entity Victory:number WinSound:string
+@persist MissedStreak:number TotalMissed:number Failure:number FreePlay:number
+@persist Xonly:number Yonly:number Warning:number
+#########################
+# Time saving variables #
+#########################
+Owner     = owner()
+Chip      = entity()
+PrintC    = _HUD_PRINTCONSOLE
+
+
+if( first() )
+{
+runOnTick(1)
+###############
+# First Var's #
+###############
+Points = 0
+
+#############
+# Customize #
+#############
+StartupTime = 10                                 # How long before the code starts?      Default is 10
+FreePlay    = 0                                  # Do you want to play continueously?    Default is 0
+Victory     = 20                                 # How many points until victory?        Default is 20
+Seconds     = 5                                  # How long before the barrels disapear? Default is 5
+Distance    = 800                                # How far away can the barrels spawn?   Default is 800
+Color       = vec(0,0,0)                         # What color will the barell be?        Default is vec(0,0,0)
+Material    = "models/debug/debugwhite"          # What material will it be?             Default is models/debug/debugwhite
+SpawnSound  = "/ambient/misc/brass_bell_e.wav"   # What sound will play when it spawns?  Default is /ambient/misc/brass_bell_e.wav
+GroundOnly  = 0                                  # See Extra Notes at the bottom         Default is 0
+Center      = Chip                               # See Extra notes at the bottom         Default is Owner
+Frozen      = 1                                  # Is the barell frozen when spawned?    Default is 1
+Xonly       = 0                                  # Only spawn barrels on X axis?         Default is 0
+Yonly       = 1                                  # Only spawn barrels on Y axis?         Default is 0
+
+
+###############
+# Instruction #
+###############
+print(PrintC," ")
+print(PrintC," ")
+print(PrintC," ")
+print(PrintC," ")
+print(PrintC,"---------------------------------------")
+print(PrintC,"     Barrel Game Documentation       ")
+print(PrintC,"                                     ")
+print(PrintC," Objective: Shoot the barrels before ")
+print(PrintC," they disapear, and you get points.  ")
+print(PrintC,"                                     ")
+print(PrintC," Miss 5 in a row, and you lose.      ")
+print(PrintC," Miss 10 total, and you lose.        ")
+print(PrintC,"                                     ")
+print(PrintC," Requirements;                       ")
+print(PrintC," TF2 for sounds                      ")
+print(PrintC,"                                     ")
+print(PrintC,"                                     ")
+print(PrintC," Make sure not to                    ")
+print(PrintC," go out of the world                 ") 
+print(PrintC,"                                     ")
+print(PrintC,"                                     ")
+print(PrintC," The game will begin "+toString(StartupTime)+" seconds")
+print(PrintC," after pasting the code.             ")
+print(PrintC,"                                     ")
+print(PrintC," Make sure to edit options to your   ")
+print(PrintC," liking! Options found at top of code")
+print(PrintC,"                                     ")
+print(PrintC,"                                     ")
+print(PrintC,"                                     ")
+print(PrintC,"        ~Made By Phatso727           ")
+print(PrintC,"-------------------------------------")
+print(PrintC," ")
+print(PrintC," ")
+print(PrintC," ")
+print(PrintC," ")
+hint("Documentation printed to console.",10)
+timer("Spawn",(StartupTime*1000))
+
+timer("WarningCheck",1000)
+Warning = StartupTime == 0 ? 1 : StartupTime
+
+if(Victory < 1)
+{
+    print("Victory option must be at least 1.")
+    selfDestruct()
+}
+
+}
+
+###########
+# Warning #
+###########
+if( clk("WarningCheck") )
+{
+    Warning--
+    if( round(Warning) < 6 )
+    {
+        hint(toString(Warning),1)
+    }
+    if( round(Warning) > 1 )
+    {
+        timer("WarningCheck",1000)
+    }
+} 
+
+##############
+# Random Pos #
+##############
+PX = Center:pos():x()
+PY = Center:pos():y()
+PZ = Center:pos():z()
+
+RX = (clamp(Yonly,0,1)) == 0 ? (randint( ( PX + Distance ), ( PX - Distance ) )) : (randint( ( PX ), ( PX ) ))
+
+RY = (clamp(Xonly,0,1)) == 0 ? (randint( ( PY + Distance ), ( PY - Distance ) )) : (randint( ( PY ), ( PY ) ))
+
+RZ = (clamp(GroundOnly,0,1)) == 0 ? (randint( ( PZ ), ( PZ + Distance ) ) ) : (PZ)
+
+Pos = vec(RX,RY,RZ)
+
+
+############
+# If timer #
+############
+if( clk("Spawn") )
+{
+    stoptimer("WarningCheck")
+    Barrel:soundPlay( 1,0,"/ambient/alarms/klaxon1.wav" )   
+    # Had to include the missed into the timer click.
+    if( Barrel:isValid() == 1 )
+    {
+        MissedStreak++,TotalMissed++
+    }
+# Missed points end here
+
+    Barrel:propDelete()
+    soundStop(2)    
+    timer("Spawn",( Seconds*1000 ) )
+    if (Pos:isInWorld())
+    {
+        Barrel = propSpawn( "models/props_c17/oildrum001_explosive.mdl" , Pos , clamp(Frozen,0,1) )
+        Barrel:soundPlay( 2,0,SpawnSound )
+        Barrel:setMaterial( Material )
+        Barrel:setColor( Color )
+        hint( "Barrel Spawned",5 )
+    }
+    else
+    {
+        hint("Error in spawn position. Respawning.",3)
+    }
+}
+
+############
+# In world #
+############
+# This section makes sure the player doesn't go out of the world.
+# Unless Freeplay == 0
+
+if( owner():pos():isInWorld() == 0 &( clamp(FreePlay,0,1) == 0 ) )
+{
+    hint("Chip removed, don't go out of world.",5)
+    Barrel:propDelete()
+    selfDestruct()
+}
+    
+################
+# Point system #
+################
+# Thanks to MoffboffJoe for help with this part
+Points2 = (Points + 1) # Otherwise you're one below your actual score, it counts the first one as a point.
+if( changed(Barrel:isValid()) )
+{
+    if( !clk("Spawn") )
+    {
+        if( !first() ) 
+        {
+            if( !clk("WinSound") )
+            {
+                if( !clk("LoseSound"))
+                {
+                    Points++
+                
+                    if( Victory > 0 & (clamp(FreePlay,0,1)) == 0)
+                    {
+                         hint(toString(Points2)+" / "+toString(Victory),2)
+                    }
+                    else{
+                        hint(toString(Points2),2)
+                    }
+                }
+            }
+        }
+    }
+}
+
+######################
+# Victory Conditions #
+######################
+if( Points == Victory &( FreePlay == 0 ) &( Victory > 0 ))
+{
+    runOnTick(0)
+    stoptimer("Spawn")
+    Points = 0
+    Barrel:propDelete()
+    timer("WinSound",7800)
+    owner():soundPlay(5,0,"misc/your_team_won.wav")
+    hint("Score limit reached!\nYou Won!",5)
+}
+    if(clk("WinSound"))
+    {
+        hint("Respawn code to play again",10)
+        selfDestruct()
+}
+
+###################
+# Fail Conditions #
+###################
+if( MissedStreak == round((Victory*10)/1.5) &( clamp(FreePlay,0,1) == 0 ) | TotalMissed == round((Victory*10)/4) &( clamp(FreePlay,0,1) == 0 ) &(Victory > 0) )
+{
+    runOnTick(0)
+    stoptimer("Spawn")
+    Chip:setAlpha(0)
+    Points = MissedStreak = TotalMissed = 0
+    Barrel:propDelete()
+    timer("LoseSound",8000)
+    owner():soundPlay(7,0,"misc/your_team_lost.wav")
+    hint("You've lost!",2)
+}
+    if( clk("LoseSound") )
+    {
+        hint( "Respawn code to play again",10)
+        selfDestruct()
+    }
+    
+################
+# Testimonials #
+################
+#[
+#    weinerman1000 says..         "Hours of fun for the whole family!"
+#    Tony the Loney Coder says... "Fun for every one on the server! Even on your own!"
+
+    
+    
+    
+    
+    
+
+###############
+# Extra Notes #
+###############
+
+
+#1. Center option: The barrels spawn randomly around a center point, by default, that center point is the owner.
+#You can change it to be around the E2 chip, though, by changine the option to Chip
+
+#2. GroundOnly Option: This option forces the barrels to only spawn on the current Z plane of the Center entity ( See above for more info on Center)
+
+
+
+
+
+# Coded by Phatso727 
+#   With help from;
+#   MoffBoffJoe  - Help with the point system
+

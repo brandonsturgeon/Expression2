@@ -1,0 +1,41 @@
+@name Smooth Color Transistion
+@outputs CurCol:vector
+@persist NextCol:vector Counter Difference:vector StartCol:vector
+@persist ChangeAmount:number
+
+if(first())
+{
+    CurCol = vec(255, 255, 255)
+
+    Difference = vec(0, 0, 0)
+    
+    function vector randCol()
+    {
+        return randvec(vec(0,0,0), vec(255,255,255))
+    }
+    NextCol = vec(0, 0, 0)
+    
+    ChangeAmount = 50
+    Counter = ChangeAmount
+    
+    holoCreate(1, entity():pos()+vec(0, 0, 100))
+    holoParent(1, entity())
+    holoModel(1, "hq_icosphere")
+    holoScale(1, vec(10, 10, 10))
+    holoShadow(1, 0)
+    holoDisableShading(1, 1)
+}
+
+if(Counter == ChangeAmount)
+{    
+    StartCol = CurCol
+    NextCol = randCol()
+    Difference = (StartCol - NextCol) / vec(ChangeAmount, ChangeAmount, ChangeAmount)
+    Counter = 1
+}
+CurCol = StartCol - (Difference * vec(Counter, Counter, Counter))
+#holoColor(1, CurCol)
+holoColor(1, CurCol)
+Counter += 1
+
+interval(25)

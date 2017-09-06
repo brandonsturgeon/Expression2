@@ -1,0 +1,170 @@
+@name AoE Sphere 2
+@inputs 
+@outputs Pos:vector ScaleSize Colors
+@persist ScaleSize KeepTrack:table FindCounter:number FindList:array PlayerColors:array Use
+@persist Holos:table
+if(first())
+{
+    ScaleSize = 10
+    Colors = 1
+    holoCreate(9999, entity():pos(), vec(1, 1, 1))
+    holoScaleUnits(9999, vec(2000/ScaleSize - 1, 2000/ScaleSize - 1, 1))
+    holoColor(9999, vec(0, 0, 0))
+    holoModel(9999, "hq_rcylinder_thin")
+    holoDisableShading(9999, 1)
+    
+    holoCreate(9998, entity():pos(), vec(1, 1, 1))
+    holoScaleUnits(9998, vec(2000/ScaleSize, 2000/ScaleSize, 1500/ScaleSize))
+    holoColor(9998, vec(255, 255, 255))
+    holoAlpha(9998, 10)
+    holoModel(9998, "hq_icosphere")
+    holoDisableShading(9998, 1)
+    
+    KeepTrack = table()
+    Holos = table()
+
+    foreach(K, Player:entity = players())
+    {
+        KeepTrack[Player:id():toString(), entity] = Player
+        holoCreate(Player:id())
+        Holos[Player:id():toString(), entity] = holoEntity(Player:id())
+        holoScaleUnits(Player:id(), Player:boxSize()/ScaleSize)
+    }
+        
+    FindCounter = 0
+    Includes = array("player", "prop_", "npc_", "gmod_wheel", "gmod_light", "gmod_lamp", "gmod_wire_*",
+                     "gmod_balloon", "gmod_cameraprop", "gmod_thruster")
+    Excludes = array("gmod_wire_hologram")
+    
+    foreach(K, Include:string = Includes)
+    {
+        findIncludeClass(Include)
+    }
+    foreach(K, Exclude:string = Excludes)
+    {
+        findExcludeClass(Exclude)
+    }
+
+    
+    PlayerColors = array( vec(255, 0, 0),
+                          vec(0, 255, 0),
+                          vec(0, 0, 255),
+                          vec(255, 255, 0),
+                          vec(0, 255, 255),
+                          vec(255, 0, 255),
+                          vec(0, 150, 255),
+                          vec(150, 0, 255),
+                          vec(255, 150, 0),
+                          vec(255, 0, 150),
+                          vec(255, 255, 150),
+                          vec(150, 150, 255))
+    
+}
+holoPos(9999, entity():pos() - vec(0, 0, 0))
+holoPos(9998, entity():pos() - vec(0, 0, 0))  
+Use = owner():keyUse()
+
+# Add new ones
+if(FindCounter == 5)
+{ 
+    if(findCanQuery())
+    {
+        findExcludeEntities(Holos:values())
+        findInSphere(entity():pos(), 1000)
+        LookThrough = findToArray()
+    }
+    foreach(K, E:entity = LookThrough)
+    {
+        if(E:pos():distance(entity():pos()) < 1000)
+        {
+            if(!KeepTrack:exists(E:id():toString()))
+            {
+                KeepTrack[E:id():toString(), entity] = E
+                holoCreate(E:id())
+                Holos[E:id():toString(), entity] = holoEntity(E:id())
+                if(E:isPlayer())
+                {
+                    holoScaleUnits(E:id(), E:boxSize()/ScaleSize)
+                }
+                holoAnim(E:id(), E:getAnimation())
+            }
+        }
+    }
+  #  print(KeepTrack:count():toString() + " -- " + Holos:count():toString())
+}
+else
+{
+    foreach(Key, Entity:entity = KeepTrack)
+    {
+        ID = Key:toNumber()
+        if(Entity:isValid() == 0 | Entity:pos():distance(entity():pos()) > 1000)
+        {
+            if(Entity:isPlayer())
+            {
+                holoAlpha(ID, 0)
+            }
+            else
+            {
+                holoDelete(ID)
+                KeepTrack:remove(ID:toString())
+                Holos:remove(ID:toString())
+            }
+        }
+        holoPos(ID, (Entity:pos() - entity():pos()+vec(0, 0, 1))/ScaleSize + entity():pos())
+        holoModel(ID, Entity:model())
+        if(Colors)
+        {
+            if(Entity:isPlayer())
+            {
+                holoColor(Entity:id(), PlayerColors[Entity:id(), vector])
+                if(Entity:inVehicle())
+                {
+                    holoAng(Entity:id(), Entity:vehicle():angles()+ang(90, 0, 0))
+                }
+                else
+                {
+                    local Eang = Entity:eyeAngles()
+                    holoAng(Entity:id(),ang(Entity:angles():pitch(), Eang:yaw(), Eang:roll()))
+                }
+            }
+            else
+            {
+                holoColor(Entity:id(), PlayerColors[Entity:owner():id(), vector])
+                holoAng(Entity:id(), Entity:angles())
+            }
+        }
+        else
+        {
+            #holoColor(Entity:id(), vec(255, 255, 255))
+            holoColor(Entity:id(), Entity:getColor())
+        }
+        if(Entity:pos():distance(entity():pos()) <= 1000)
+        {holoAlpha(Entity:id(), 255)}
+        holoScaleUnits(ID, Entity:boxSize()/ScaleSize)
+        holoMaterial(ID, "models/debug/debugwhite")
+        holoAnim(Entity:id(), Entity:getAnimation())
+
+    }
+}
+
+# Updates everything if another player joins
+if(changed(players():count()) &!first())
+{
+    foreach(K, Player:entity = players())
+    {
+        #Player=noentity()
+        KeepTrack[Player:id():toString(), entity] = Player
+        holoCreate(Player:id())
+        Holos[Player:id():toString(), entity] = holoEntity(Player:id())
+        holoScaleUnits(Player:id(), Player:boxSize()/ScaleSize)
+    }
+}
+
+Pos = entity():pos()
+FindCounter += 1
+if(FindCounter == 6)
+{
+    FindCounter = 0
+}
+interval(100)
+

@@ -1,0 +1,46 @@
+@name Spectate Toggle
+@persist Players:array Counter:number Time:number
+
+if(first())
+{
+    Counter = 0
+    Players = players()
+    Time = 5
+    
+    # Gets an array of only Non-admins, by removing all admins and super admins
+    foreach(K, Player:entity = Players)
+    {
+        if(Player:isAdmin() | Player:isSuperAdmin())
+        {
+            Players:remove(K)
+        }
+    }
+    
+    # Starts the loop
+    timer("next", 0)
+}
+
+
+if(clk("next"))
+{
+    # Loops through the array by adding 1 to the counter until it's greater than the number of playesr
+    if(Counter >= Players:count())
+    {Counter = 1}
+    
+    # Then sets it back
+    else
+    {Counter = Counter + 1}
+
+    # Gets the name of the player we're going to spectate
+    local Pname = Players[Counter, entity]:name()
+    print(Pname)
+	
+	# Well, you can't spectate while you're already spectating
+	# So this SOMETIMES works, otherwise the code is useless
+    #concmd("+forward")
+    #concmd("-forward")
+    #concmd("ulx spectate "+Pname)
+
+    # Text timer loop
+    #timer("next", Time*1000)
+}

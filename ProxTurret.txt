@@ -1,0 +1,93 @@
+@name ProxTurret
+@inputs 
+@outputs TargetPos:vector Aim Fire Laser
+@persist Exclude:array Warned:table Target:entity Closest:entity
+@trigger 
+
+if(first() | duped())
+{
+    Exclude = array("Phatso727", "[DPAD] Hexwolf", "Therrad ", "NotLehtalKllier", "kurin")
+    function normal array:containsString(S:string)
+    {
+        foreach(K, V:string = This)
+        {
+            if(V == S)
+            {
+                return 1
+            }
+        }
+        return 0
+    }
+    foreach(K, Name:string = Exclude)
+    {findExcludePlayer(Name)}
+    Warned = table()
+    foreach(K, Player:entity = players())
+    {
+        Warned[Player:steamID(), number] = 0
+    }
+    Target = noentity()
+    Closest = noentity()
+    Laster = 0
+}
+
+foreach(K, Player:entity = players())
+{
+    if(!perf())
+    {break}
+    if(Exclude:containsString(Player:name()))
+    {break}
+    
+    if(Player:isAlive() & (Player:pos():distance(entity():pos()) < 2000))
+    {
+        if(Warned[Player:steamID(), number] == 0)
+        {
+            Player:soundPlay(K, 0, "alarms/klaxon1.wav")
+            Warned[Player:steamID(), number] = 1
+        }
+        
+        if(Target == noentity())
+        {
+            if(Player:pos():distance(entity():pos()) < 1000)
+            {
+                Target = Player
+                Aim = 1
+                Fire = 1
+                TargetPos = Target:pos() + vec(0, 0, 50)
+                break
+            }
+        }
+    }
+    else
+    {Warned[Player:steamID(), number] = 0}
+}
+
+if(Target != noentity())
+{
+    if(Target:isAlive() == 0 | Target:pos():distance(entity():pos()) > 1000)
+    {
+        Warned[Target:steamID(), number] = 0
+        Target = noentity()
+        Fire = 0
+    }
+    TargetPos = Target:pos() + vec(0, 0, 50)
+}
+else
+{
+    if(findCanQuery())
+    {
+        foreach(K, Name:string = Exclude)
+        {findExcludePlayer(Name)}
+        findByClass("player")
+        Closest = findClosest(entity():pos())
+    }
+    if(Closest:pos():distance(entity():pos()) < 2000)
+    {
+        Laser = 1
+    }
+    else
+    {Laser = 0}
+    TargetPos = Closest:pos() + vec(0, 0, 50)
+}
+interval(10)
+
+

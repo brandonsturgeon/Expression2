@@ -1,0 +1,98 @@
+@name John the Vortiguant Baby
+@inputs RAWR
+@outputs 
+@persist R RAWR Vec:vector Target:entity
+@trigger  
+@model models/props_c17/doll01.mdl
+#models/props_c17/doll01.mdl
+interval(2500)
+
+E=entity()
+X = entity():pos():x()
+Y = entity():pos():y()
+Z = entity():pos():z()
+if(entity():isOnFire())
+{
+    findByClass("player")
+findToArray()
+Target2=findClosest(entity():pos())
+Target=findPlayerByName("Aleroniponi")
+    R=20
+    soundPlay(1,0,"/ambient/voices/squeal1.wav")
+    interval(500)
+    Dest = Target:pos()
+        Vec=(Dest-E:pos())*E:mass()*200
+        E:applyForce(Vec) 
+}
+else{R=randint(2,10)}
+
+#################################################################
+#Sound Effects
+#################################################################
+timer("A",19000)
+if (first() | duped() )
+{
+    entity():setColor(0,255,0,255)
+#    entity():setPos(vec(X,Y,Z))
+soundPlay(1,0,"ambient/intro/vortigauntend-rearl-r.wav")}
+ if(clk("A")) {soundPlay(2,0,"ambient/intro/vortigaunttrack01.wav")}
+
+
+
+
+
+#Starting Sound
+#R=randint(2,10)
+round(R)
+#if (R == 1)
+if (R == 2)
+{
+soundPlay(2,0,"vo/npc/vortigaunt/vortigese04.wav")
+}
+if (R == 3)
+{
+soundPlay(3,0,"vo/npc/vortigaunt/vortigese05.wav")
+}
+if (R == 4)
+{   
+soundPlay(4,0,"vo/npc/vortigaunt/vortigese07.wav")
+}
+if (R == 6)
+{
+soundPlay(5,0,"vo/npc/vortigaunt/vortigese08.wav")
+}
+if (R == 7)
+{
+soundPlay(6,0,"vo/npc/vortigaunt/vortigese11.wav")
+}
+if (R == 8)
+{
+    soundPlay(7,0,"vo/npc/vortigaunt/vortigese09.wav")
+}
+if (R == 9)
+{
+    soundPlay(8,0,"vo/npc/vortigaunt/vortigese12.wav")
+}
+if (R == 10)
+{
+    soundPlay(9,0,"vo/npc/vortigaunt/vortigese13.wav")
+}
+
+
+#################################################################
+#END of Sound Effets
+#################################################################
+
+
+
+
+
+
+
+
+#################################################################
+#Weapon Control Structure
+#Cannon
+#Sound: 
+#Effect:
+#################################################################

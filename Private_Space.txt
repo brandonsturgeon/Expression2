@@ -1,0 +1,48 @@
+@name Private Space
+@persist Props:array Whitelist:array
+if(first() | duped())
+{
+    Props = array()
+    Whitelist = array("Phatso727", "Serenade", "Voodoo", "kurin", "[DPAD] Hexwolf", "Peeping Peacock")
+    function normal array:containsString(S:string)
+    {
+        foreach(K, V:string = This)
+        {
+            if(V == S)
+            {
+                return 1
+            }
+        }
+        return 0
+    }
+}
+
+foreach(K,V:entity = players())
+{
+    if (V:pos():distance(entity():pos()) <= 2200)
+    {
+        if(!Whitelist:containsString(V:name()) &(V:isAlive()))
+        {
+            V:teleport(vec(0, 0, 0))
+            #concmd("ulx slay "+V:name())
+            
+        }
+    }
+}
+
+
+findIncludeClass("prop_*")
+findIncludeClass("gmod_wire_*")
+findInSphere(entity():pos(), 2200)
+Props = findToArray()
+
+foreach(K, V:entity = Props)
+{
+
+    if(!Whitelist:containsString(V:owner():name()))
+    {
+        V:setPos(vec(0,0,0))
+        V:teleport(vec(0, 0, 0))
+    }
+}
+interval(300)

@@ -1,0 +1,9 @@
+@name 
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+interval(1000)
+
+print(owner():weapon():model())

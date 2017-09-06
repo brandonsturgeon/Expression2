@@ -1,0 +1,59 @@
+@name Kracken
+@persist SArray:array
+
+if(first())
+{
+    SArray = array("npc/advisor/advisor_scream.wav",
+                   "npc/advisor/advisor_scream.wav",
+                   "npc/advisor/advisor_scream.wav",
+                   "npc/advisor/advisor_scream.wav",
+                   "npc/advisor/advisor_speak01.wav",
+                   "npc/advisor/advisorscreenvx01.wav",
+                   "npc/advisor/advisorscreenvx02.wav",
+                   "npc/advisor/advisorscreenvx03.wav",
+                   "npc/advisor/advisorscreenvx04.wav",
+                   "npc/advisor/advisorscreenvx05.wav",
+                   "npc/advisor/advisorscreenvx06.wav",
+                   "npc/advisor/advisorscreenvx07.wav",
+                   "npc/advisor/advisorscreenvx08.wav",
+                   "npc/stalker/stalker_alert2b.wav",
+                   "npc/stalker/stalker_alert3b.wav",
+                   "npc/stalker/stalker_die2.wav",
+                   "npc/stalker/stalker_scream2.wav",
+                   "npc/stalker/stalker_scream3.wav",
+                   "npc/stalker/stalker_scream4.wav",
+                   "npc/strider/strider_hunt3.wav",
+                   "npc/strider/strider_hunt2.wav",
+                   "npc/strider/strider_hunt1.wav",
+                   "npc/strider/striderx_alert5.wav",
+                   "npc/strider/striderx_alert4.wav",
+                   "npc/strider/striderx_alert2.wav",
+                   "npc/strider/striderx_die1.wav",
+                   "npc/vort/ol02singlechant03.wav",
+                   "npc/vort/ol02singlechant01.wav",
+                   "npc/vort/vort_pain3.wav")
+                
+    function holoPlay(Sound:string)
+    {
+        holoCreate(1, entity():pos(), vec())
+        holoParent(1, entity())
+        
+        holoCreate(2, entity():pos(), vec())
+        holoParent(2, entity())
+        
+        holoCreate(3, entity():pos(), vec())
+        holoParent(3, entity())
+        
+        holoCreate(4, entity():pos(), vec())
+        holoParent(4, entity())
+        
+        holoEntity(1):soundPlay(2,0,Sound)
+        holoEntity(2):soundPlay(3,0,Sound)
+        holoEntity(3):soundPlay(4,0,Sound)
+        holoEntity(4):soundPlay(5,0,Sound)
+    
+    }
+}
+
+holoPlay(SArray[randint(1, SArray:count()), string])
+interval(randint(3000, 13000))

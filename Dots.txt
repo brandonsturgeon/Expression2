@@ -1,0 +1,83 @@
+@name Dots
+@inputs EGP:wirelink
+@outputs LineCounter:number
+@persist Dots:table NumDots:number
+@persist DotColor:vector LineColor:vector
+
+if(first())
+{
+    EGP:egpClear()
+    Dots = table()
+    NumDots = 13
+    
+    DotColor = vec(255, 100, 100)
+    LineColor = vec(255, 0, 0)
+    
+    for(I=1, NumDots)
+    {
+        CX = randint(10, 480)
+        CY = randint(10, 480)
+        
+        RX = randint(10, 100)
+        RY = randint(10, 100)
+        
+        Speed = random(0.01, 0.03)
+        Size = randint(1,4)
+        Dots[toString(I), table] = table("CX" = CX,
+                                         "CY" = CY,
+                                         "RX" = RX,
+                                         "RY" = RY,
+                                         "Speed" = Speed,
+                                         "Size" = Size)
+    }
+    LineCounter = NumDots+1
+}
+EGP:egpClear()
+foreach(K, V:table = Dots)
+{
+    # Drawing and moving Circles
+    T = realtime() / V["Speed", number]
+    V["X", number] = V["CX", number]+V["RX", number]*cos(T)
+    V["Y", number] = V["CY", number]+V["RY", number]*sin(T)
+    local DSize = V["Size", number]
+    local Altcol = V["Altcol", number]
+    EGP:egpCircle(K:toNumber(), vec2(V["X", number], V["Y", number]), vec2(DSize, DSize))
+    EGP:egpColor(K:toNumber(), DotColor)
+
+    
+    # Drawing lines
+    for(I=(K:toNumber()+1), Dots:count())
+    {
+        # Calculates Distance
+        X2 = Dots[toString(I), table]["X", number]
+        X1 = V["X", number]
+        
+        Y2 = Dots[toString(I), table]["Y", number]
+        Y1 = V["Y", number]
+        
+        XCalc = X2 - X1
+        XCalc *= XCalc
+        YCalc = Y2 - Y1
+        YCalc *= YCalc
+        Distance = sqrt(XCalc + YCalc)
+        
+        # Draws the lines if in range
+        if(Distance <= 200)
+        {
+            EGP:egpLine(LineCounter, vec2(X1, Y1), 
+                                        vec2(X2, Y2))
+            EGP:egpColor(LineCounter, LineColor)
+            # The 1.275 just makes it so that at a distance of 0, alpha is 255
+            # And at a distance of 200, alpha is 0
+            EGP:egpAlpha(LineCounter, 255 - (Distance*1.275))
+            
+            # Dealing with the stupid index thing...
+            LineCounter += 1
+            if(LineCounter >= 120)
+            {LineCounter = NumDots+1}
+        }
+    }
+}
+        
+
+interval(100)

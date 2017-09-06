@@ -1,0 +1,66 @@
+@name Color_Squares [WIP]
+@inputs 
+@outputs 
+@persist Grid:table SqSize BoardSize
+
+if(first())
+{
+    SqSize = 30 # X and Y Size of each square (In GUnits)
+    BoardSize = 240 # X and Y Size of whole grid (In GUnits)
+    # Creates an initial square to reference from
+    holoCreate(99, entity():pos())
+    holoParent(99, entity())
+    holoScaleUnits(99, vec(SqSize, SqSize, 3))
+    local Start = holoEntity(99)
+    Grid = table()
+    
+    # Loop through and make a grid
+    GridSize = round(BoardSize / SqSize)
+    local TrackX = StartX = -(((GridSize-1)/2)*SqSize + (SqSize/2))
+    local TrackY = StartY = -(((GridSize-1)/2)*SqSize + (SqSize/2))
+    local Z = Start:pos():z()
+    local Counter = 1
+    for(X=1, GridSize)
+    {
+        for(Y=1, GridSize)
+        {
+            holoCreate(Counter, Start:pos() + vec(TrackX, TrackY, 0))
+            holoParent(Counter, entity())
+            holoScaleUnits(Counter, vec(SqSize, SqSize, 3))
+            local RandColor = randvec(vec(1,1,1), vec(255,255,255))
+            holoColor(Counter, vec(0,0,0))
+            Grid[Counter:toString(), vector] = RandColor
+            
+            Counter += 1
+            TrackY += SqSize
+        }
+        TrackY = StartY
+        TrackX += SqSize
+    }
+    # Destroy starter square
+    holoDelete(99)
+}
+
+foreach(Holo, Color:vector = Grid)
+{
+    foreach(K, Player:entity = array(owner()))
+    {
+        local Key = Holo:toNumber()
+        local Ent = holoEntity(Key)
+        
+        if(Player:pos():z() < entity():pos():z()+15)
+        {
+            local PlayerPos = vec2(Player:pos():x(), Player:pos():y())
+            local Min = vec2(Ent:pos():x()-(SqSize/2), Ent:pos():y()-(SqSize/2))
+            local Max = vec2(Ent:pos():x()+(SqSize/2), Ent:pos():y()+(SqSize/2))
+            if(inrange(PlayerPos, Min, Max))
+            {
+                holoColor(Key, Color)
+            }
+        }
+        local Diff = vec(0,0,0) - Ent:getColor()
+        holoColor(Key, Ent:getColor() + (Diff/10))
+    }
+}
+
+interval(100)

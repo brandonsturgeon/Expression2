@@ -1,0 +1,472 @@
+#[
+Coded by Voodoo
+STEAM_0:1:28607710 if you need to contact me
+EGP that displays Info based on a menu selection
+C1/2/12
+U5/30/13
+]#
+#ERROR
+#sv: Expression 2 (Info): entities/gmod_wire_expression2/core/string.lua:255: attempt to index local 'rv1' (a nil value)
+#ERROR sv: Expression 2 (Info): entities/gmod_wire_expression2/core/string.lua:63: attempt to concatenate a nil valueg
+@name Info
+@inputs EGP:wirelink 
+@persist Players:string [P O E]:entity Counter:number Click:number [R1 R2 R3]:number DIM:number AdminsOn:number
+#Easier textbox_management
+@persist [SI S0 S1 S2 S3 S4 S5 S6 S7 S8 S9 S10]:string [Health]:number Time:string PY:array
+@trigger 
+#512x512
+#256x256
+
+function vector getColor(Color:string)
+{
+    SmallsColor = Color:lower()
+    White = vec(255,255,255)
+    Black = vec(0,0,0)
+    Red = vec(255,0,0)
+    Blue = vec(0,0,255)
+    Green = vec(0,255,0)
+    Purple = vec(99,3,99)
+    LightBlue = vec(0,54,229)
+    Grey = vec(83,84,85)
+    BW = table()
+    BW[1,vector] = Black
+    BW[2,vector] = White
+    #Gmod Theme
+    Gmod = table()
+    Gmod[1,vector] = Grey 
+    Gmod[2,vector] = LightBlue
+    Gmodb = Gmod[2,vector]
+    Gmodf = Gmod[1,vector]
+    
+#if(SmallsColor == "White"){ return White }
+    if(SmallsColor == "white"){ return White }
+    if(SmallsColor == "red"){ return Red }
+    if(SmallsColor == "black"){ return Black }
+    if(SmallsColor == "green"){ return Green }
+    if(SmallsColor == "purple"){ return Purple }
+    if(SmallsColor == "lightblue"){ return LightBlue}
+    if(SmallsColor == "grey"){ return Grey }
+
+
+    
+}
+function void changeTheme(ColorForeground:string, ColorBackground:string, ColorText:string)
+{       
+
+    #Background
+    
+    #Foreground
+    
+    #Text
+   
+}
+function void drawGUI()
+{
+        
+    #Clear&Refresh
+    EGP:egpClear()
+    changeTheme("white","black","white")
+ 
+    #Main Menu
+    #WHITE background
+    EGP:egpRoundedBox(1,vec2(256,256),vec2(500,500))
+    #TOP Round Box
+    #EGP:egpRoundedBox(2,vec2(256,50),vec2(256,50))
+    EGP:egpRoundedBox(2,vec2(255,50),vec2(480,50))
+    #Box at end
+    EGP:egpRoundedBox(3,vec2(256,450),vec2(400,50))
+    #Middle black box
+    EGP:egpRoundedBox(4,vec2(256,250),vec2(480,300))
+    
+    #Color for background boxes
+    EGP:egpColor(1,vec(255,255,255))
+    EGP:egpColor(2,vec(0,0,0))
+    EGP:egpColor(3,vec(0,0,0))
+    EGP:egpColor(4,vec(0,0,0))
+
+    #Selection Boxes
+    EGP:egpRoundedBox(5,vec2(220,370),vec2(50,50))
+    EGP:egpRoundedBox(6,vec2(300,370),vec2(50,50))
+    #Left&Right Arrows
+    #EGP [ 5,7,]
+    EGP:egpTriangle(7,vec2(199,370),vec2(230,350),vec2(230,380))
+    #EGP [ 6,8,]
+    #EGP:egpTriangle(8,vec2(320,370),vec2(295,350),vec2(295,380)) 
+    EGP:egpTriangle(8,vec2(290,380),vec2(290,350),vec2(320,370))
+
+    #Start arrows off black
+    EGP:egpColor(7,vec(0,0,0))
+    EGP:egpColor(8,vec(255,255,255))
+
+    
+    #Simple Cursor
+    EGP:egpCircleOutline(9,vec2(-500,-500),vec2(3,3))
+
+    
+}
+#TimeConvertFunction
+function string convert24(){    
+    
+    MODE = "PM"
+    HR = time("hour")
+    MIN = time("min")
+    SEC = time("sec")
+
+    Time = (HR + ":" + MIN + ":" + SEC + " " + MODE)
+    return Time
+    
+}
+
+
+
+if(duped()){EGP:egpClear() reset()}
+if(first() |dupefinished()){
+    
+    PY = players()
+    entity():setAlpha(0)
+    soundPlay(1,5,"/ambient/machines/60hzhum.wav")
+    soundPlay(2,5,"/ambient/machines/electrical_hum_2.wav")
+    soundPlay(3,2,"/ambient/machines/lab_loop1.wav")
+    #Misc
+    O = owner()
+    Counter = 1
+    E = entity()
+    Health = 100
+    PCount = players():count()
+    Time = " "
+    #S1->S5 = MainContent
+    #S6->210 = SecondaryContent
+    SI,S0,S1,S2,S3,S4,S5,S6,S7,S8,S9,S10 = "" 
+    drawGUI()    
+#############################################################################################
+#INFO_BOX_FIRST
+#############################################################################################   
+    #EGP:egpSize(11,12)
+    EGP:egpText(10,"null",vec2(100,10))
+    EGP:egpText(11,hostname(),vec2(50,45))
+    EGP:egpSize(11,12)
+    EGP:egpText(14,S1,vec2(50,120))
+    EGP:egpText(15,S2,vec2(50,140))
+    EGP:egpText(16,S3,vec2(50,160))
+    EGP:egpText(17,S4,vec2(50,180))
+    EGP:egpText(18,S5,vec2(50,200))
+    EGP:egpText(20,"",vec2(50,220))
+    EGP:egpText(21,"",vec2(50,250))
+    EGP:egpText(22,"",vec2(50,270))
+    EGP:egpText(23,"",vec2(50,290))
+    
+#############################################################################################    
+    
+
+}
+#interval(500)
+runOnTick(1)
+#############################################################################################
+#GET_INFO
+#############################################################################################
+Players = (toString(numPlayers())+"/"+toString(maxPlayers())+" players")
+
+#############################################################################################
+
+#############################################################################################
+#DETECT_Player
+#############################################################################################
+#Parent my cursor to the screen
+findByClass("player")
+P = findClosest(entity():pos())
+Cursor = EGP:egpCursor(P)
+EGP:egpParentToCursor(9)
+#MISC
+Click = P:keyUse()
+#############################################################################################
+
+
+
+
+#############################################################################################
+#SELECTION_BOX_+ARROWS
+#############################################################################################
+    #Left Button
+    EGP:egpRoundedBox(5,vec2(220,370),vec2(50,50))
+    if(inrange(Cursor, vec2(195,340),vec2(230,390)))
+    {
+            DIM = 1
+            EGP:egpColor(5,vec(0,0,0))
+            EGP:egpColor(7,vec(255,255,255))
+            #EGP:egpColor(9,vec(0,0,0))
+        
+            if((changed(Click)& Click)){
+                    
+                    Counter -= 1
+                    if(Counter <  1){
+                            soundPlay(6,2,"/buttons/button10.wav")
+                            Counter = 1
+                        }
+                    else{
+                        soundPlay(4,2,"/buttons/button14.wav")
+                    }
+            }
+            else{
+                    Counter += 0
+            }
+        
+        
+    }
+     else{
+            DIM = 0
+            EGP:egpColor(5,vec(255,255,255))
+            EGP:egpColor(7,vec(0,0,0))
+            #EGP:egpColor(9,vec(255,255,255))
+            
+    
+        } 
+    
+    
+    #Right Button
+    EGP:egpRoundedBox(6,vec2(300,370),vec2(50,50))
+    if(inrange(Cursor, vec2(280,330),vec2(345,410)))
+    {
+            DIM = 1
+            EGP:egpColor(6,vec(0,0,0))
+            EGP:egpColor(8,vec(255,255,255))
+            #EGP:egpColor(9,vec(0,0,0))
+            
+            if((changed(Click)& Click)){
+                
+                Counter += 1
+                    
+        
+            if(P:isAdmin() || P:steamID() == "STEAM_0:1:28607710"){
+                    if(Counter > 5){
+                        soundPlay(7,2,"/buttons/button10.wav")
+                        Counter = 5
+                        }
+                    else{
+                        soundPlay(5,2,"/buttons/button14.wav")
+                    }
+            }     
+            elseif((P:isAdmin() != 1)){
+                    if(Counter > 4){
+                        soundPlay(7,2,"/buttons/button10.wav")
+                        Counter = 4
+                        }
+                    else{
+                        soundPlay(5,2,"/buttons/button14.wav")
+                    }
+            }
+            }
+                
+            
+            else{
+                    Counter -= 0
+            }
+        
+    }
+        else{
+            DIM = 0
+            EGP:egpColor(6,vec(255,255,255))
+            EGP:egpColor(8,vec(0,0,0))
+            #EGP:egpColor(9,vec(255,255,255))
+            
+        }
+
+#############################################################################################
+
+
+
+
+
+
+
+#############################################################################################
+#Players_INFO
+#############################################################################################
+if(changed(Players)){EGP:egpText(12,Players,vec2(220,450))}
+
+
+#############################################################################################
+#_INFO
+#############################################################################################
+
+#
+#IMPORTANT: The reason why I have S# = "" even if there is nothing in it, is
+#when you change menu, it will store that variable even when changing.
+#So you'll have say.. S2 saying "Blob" in menu 3 even if S2 is nothing in menu 3
+#
+
+#1-5
+#Main Info about Map
+if(Counter == 1){
+    S0 = "Infomation about this server"
+#S1   
+    S1 = "Map: "+map()
+#S2
+    S2 = "Current gamemode: "+gamemode()
+#S3    
+    if(isDedicated() == 1){ S3 = "Dedicated?: Yes" }
+    else{ S3 = "Dedicated?: No"}
+#S4    
+    if(playerDamage() == 1){ S4 = "Is damage on?: Yes" }
+    else{ S4 = "Is damage on?: No" }
+   
+#S5    
+    S4 = "Current time:  ("+ convert24()+")"  
+
+    S5 = "Max players: ("+toString(maxPlayers())+")"
+    S6 = "Current number of players: ("+toString(numPlayers())+")"
+    S7 = "Max props per a person: "+ toString(maxOfType("props"))
+    Plys = players()
+    for(I = 0, players():count())
+    {
+        if(Plys[I,entity]:isAdmin() == 1){ AdminsOn += 1}
+        else{ AdminsOn += 0 }
+        
+    }
+    YesNo = "No"
+    if(AdminsOn >= 1){ YesNo = "Yes" }else { YesNo = "No"}
+    S8 = "Are there any admins on: " + YesNo
+    
+}
+#InfoAboutThePlayer
+if(Counter == 2){
+    #Eliminates the big font bug
+    EGP:egpSize(22,13) 
+    S0 = "Information about current player"
+    S1 = "Name: "+ P:name()
+    S2 = "ID: "+P:steamID()
+    S3 = "Kill/Death ratio: "+toString(P:frags())+"/"+toString(P:deaths())
+    #Detection of admin, or if, superadmin
+    if(P:isAdmin()){ 
+        S4 = "Is an admin?: Yes"
+        if(P:isSuperAdmin()){ S4 = "Is an admin?: Yes, superadmin"}
+    }
+    else{ S4 = "Is an admin?: No" }
+    S5 = "Current position:" +round(P:pos()):toString()
+    
+    #For Player:health()/100 OR if P:health > 100, Health = P:health()
+    #in other words, if 100, or above, health becomes max health
+    if(P:health() > 100){
+        Health = P:health()
+        S6 = "Health: "+toString(P:health())+"/"+Health
+    }
+    elseif(P:health() <= 0)
+    {
+        S6 = "Health: DEAD"
+    }
+    else{ Health = 100 , S6 = "Health: "+toString(P:health())+"/"+Health}
+    
+    S7 = "Current Model: "+P:model()
+    
+    #Detection of weaponORtool
+    if(P:tool() == "" | P:tool():length() == 0){
+        S8 = "Current (weapon/tool): "+(P:weapon():model())
+    }
+    elseif(P:weapon():name() == ""){
+        S8 = "Current (weapon/tool): "+P:tool() 
+         
+    }
+    else{
+        S8 = "null->error"
+    }
+    S9 = ""
+}
+else{ EGP:egpSize(22,16) } 
+#Credits
+if(Counter == 3){
+    S0 = "Color Selection"
+    S1 = "Background Color"          
+    S2 = "Font Color"
+    S3 = "<->"
+    S4 = "<->"
+    S5 = ""
+    S6 = ""
+    S7 = ""
+    S8 = "[In Progress]"
+    S9 = "[Redoing panel to become color selection]"
+}
+#Debug
+if(Counter == 4){
+    S0 = "Credits"
+    S1 = "Coded & Nutured by Voodoo"
+    S2 = "STEAM_0:1:28607710"
+    if(changed(ops())){
+        S3 = "Ops:"+toString(ops())
+    }
+    S4 = "Name of E2: "+entity():getName()
+    S5 = "Owner is of E2 is "+owner():name()
+    S6 = ""
+    S7 = ""
+    S8 = ""
+    S9 = ""
+
+    
+}
+
+#Admin Panel, not to be used by regulars
+#Simple stuff, Slay, freeze, jail
+if(P:isAdmin() || P:steamID() == "STEAM_0:1:28607710"){ 
+    if(Counter == 5){
+
+                        S0 = "Secert Admin Panel"
+                        
+                        #Stricly for meh! WOO
+                        if(P:steamID() == "STEAM_0:1:28607710"){
+                            S1 = "Welcome "+owner():name()
+                        }
+                        else{
+                            S1 = "You're not Voodoo... Are you "+P:name()+"?"
+                        }
+                        S2 = "Freeze function"
+                        S3 = "Jail function"
+                        S4 = "Maul function"
+                        S4 = "hp function"
+                        S6 = "molest function"
+                        S7 = ""
+                        S8 = ""
+                        if(!(owner():isAdmin()))
+                        {
+                            S9 = "Warning:" + owner():name() + ", you're not an admin on this server."
+                        }
+                        else
+                        {
+                            S9 = "Welcome:" + owner():name() + ", you're an admin on this server."
+                        }
+                        
+       
+    }
+}
+#
+elseif((P:isAdmin() != 1) & (Counter == 5)){
+    if(Counter >= 5){
+        
+        soundPlay(8,2,"/buttons/button10.wav")
+        Counter = 4
+    }
+}
+
+
+
+#Refresh RandomColor
+R1 = randint(1,255)
+R2 = randint(1,255)
+R3 = randint(1,255)
+EGP:egpColor(1,vec($R1-R1,$R2-R2,$R3-R3))
+
+
+#############################################################################################
+#Display
+#############################################################################################
+    SI = "Current menu selection: "+toString(Counter)+"/5"
+    EGP:egpText(30,SI,vec2(150,115))
+    EGP:egpText(10,S0,vec2(150,100))
+    EGP:egpText(14,S1,vec2(50,130))
+    EGP:egpText(15,S2,vec2(50,150))
+    EGP:egpText(16,S3,vec2(50,170))
+    EGP:egpText(17,S4,vec2(50,190))
+    EGP:egpText(19,S5,vec2(50,210))
+    EGP:egpText(18,S5,vec2(50,210))
+    EGP:egpText(20,S6,vec2(50,230))
+    EGP:egpText(21,S7,vec2(50,250))
+    EGP:egpText(22,S8,vec2(50,270))
+    EGP:egpText(23,S9,vec2(50,290))
+

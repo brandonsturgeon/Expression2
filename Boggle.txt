@@ -1,0 +1,344 @@
+@name Boggle
+@inputs EGP:wirelink WordDisplay:wirelink
+@outputs Ops
+@persist Use Cursor:vector2 T Selection:array LettersLookup:array Checking RetString:string
+@persist URL:string FoundWords:array WordDisplayXY:vector2 Score LettersLimit:table
+@persist Top:array Bot:array AllTiles:array DictLink:string NeedFile ValidWords:string 
+@persist Community:number CurUser:entity
+
+# Phatso727
+
+if(first() | duped())
+{   
+    runOnChat(1)
+    # Link to the dictionary text file
+    DictLink = "http://puu.sh/hlpLE/0c46e534d1.txt"
+    Community = 1
+    
+    # Generates a random letter based on the current limits provided in Current
+    function string randLetter(Current:table)
+    {
+        # Average English letter distribution
+        local L = array("e", "e", "e", "e", "e", "e", "e", "e", "e", 
+                        "e", "e", "e", "t", "t", "t", "t", "t", "t", 
+                        "t", "t", "t", "a", "a", "a", "a", "a", "a", 
+                        "a", "a", "o", "o", "o", "o", "o", "o", "o", 
+                        "o", "i", "i", "i", "i", "i", "i", "i", "n", 
+                        "n", "n", "n", "n", "n", "n", "s", "s", "s", 
+                        "s", "s", "s", "r", "r", "r", "r", "r", "r", 
+                        "h", "h", "h", "h", "h", "h", "d", "d", "d", 
+                        "d", "l", "l", "l", "u", "u", "u", "c", "c", 
+                        "c", "m", "m", "m", "f", "f", "y", "y", "w", 
+                        "w", "g", "g", "p", "p", "b", "v", "k", "x", 
+                        "q", "j", "z")
+        # It can only try 5 times to generate a valid letter
+        for(I=1, 5)
+        {
+            # Randomly select a letter and make sure it's not breaking our limits
+            Choice = L[randint(1, L:count()), string]:upper()
+            if(!Current:exists(Choice) | Current[Choice, normal] < 2)
+            {
+                return Choice
+            }
+        }
+        # If it fails to find a valid letter just push an invalid one
+        print("couldn't find valid letter")
+        return Choice:upper()
+    }
+    
+    # Generates the playing board
+    function void genBoard()
+    {
+        EGP:egpClear()
+        T = 1
+        
+        # Every letter is limited to 3 occurances
+        # But we set some higher or lower depending on how often we want them
+        LettersLimit = table("Q" = 1, 
+                             "X" = 1, 
+                             "A" = -1, 
+                             "E" = -1, 
+                             "I" = -1, 
+                             "O" = -1, 
+                             "U" = -1)
+        EGP:egpDrawTopLeft(1)
+        
+        # Along the X axis
+        for(X=0, 4)
+        {
+            # Along the Y axis
+            for(Y=0, 4)
+            {
+                # Creates a box at this grid point
+                EGP:egpBoxOutline(T, vec2((X*102)+10, (Y*102)+10), vec2(82, 82))
+                
+                # Gives it a letter and puts it in the same place
+                local Result = randLetter(LettersLimit)
+                EGP:egpText(T+26, Result, vec2((X*102)+20, (Y*102)+10))
+                EGP:egpColor(T+26, vec(0, 100, 255))
+                EGP:egpSize(T+26, 82)
+                LettersLookup[T, string] = Result
+                
+                # Incriments our LettersLimiter
+                # Checks if it's not already in there
+                if(!LettersLimit:exists(Result))
+                {
+                    # And set it to 1 initially
+                    LettersLimit[Result, normal] = 1
+                }
+                
+                # Otherwise incriment it
+                else
+                {
+                    LettersLimit[Result, normal] = LettersLimit[Result, normal] + 1
+                }
+                
+                T = T + 1
+            }
+        }
+    }
+    
+    # Checks if an array contains a given number
+    function normal array:containsNum(N:normal)
+    {
+        foreach(K, V:normal = This)
+        {
+            if(V == N)
+            {
+                return 1
+            }
+        }
+        return 0
+    }
+    
+    # Checks if an array contains a given string
+    function normal array:containsString(S:string)
+    {
+        foreach(K, V:string = This)
+        {
+            if(V == S)
+            {
+                return 1
+            }
+        }
+        return 0
+    }
+    
+    # Turns all of the tiles white that were in your Selection
+    function void clearBoard()
+    {
+        foreach(K, Tile:normal = Selection)
+        {
+            EGP:egpColor(Tile, vec(255, 255, 255))
+        }
+    }
+    
+    # Updates the screen that lists all of the words
+    function void updateWordBoard()
+    {
+        local Count = FoundWords:count()
+        local X = WordDisplayXY[1]
+        local Y = WordDisplayXY[2]
+        
+        # Making sure it wraps back around when it hits the bottom
+        if(Y == 480)
+        {
+            X = X + 128
+            Y = 20
+        }
+        else
+        {
+            Y = Y + 20
+        }
+        WordDisplay:egpText(Count, FoundWords[Count, string], vec2(X, Y))
+        WordDisplayXY = vec2(X, Y)
+    }
+    
+    Top = array(1,6,11,16,21)
+    Bot = array(5,10,15,20,25)
+    function array aroundGrid(N:number)
+    {
+        local RetArr = array()
+        if(Top:containsNum(N) == 0 & Bot:containsNum(N) == 0)
+        {
+            RetArr = array(N+6, N+5, N+4, N+1,
+                           N-6, N-5, N-4, N-1)
+        }
+        elseif(Top:containsNum(N) == 1)
+        {
+            RetArr = array(N+6, N+5, N+4, N+1,
+                           N-6, N-5, N-4)
+        }
+        elseif(Bot:containsNum(N) == 1)
+        {
+            RetArr = array(N+6, N+5, N+4,
+                           N-6, N-5, N-4, N-1)
+        }
+        
+        local NoNegatives = array()
+        foreach(K, V:number = RetArr)
+        {
+            if(V > 0 &(V <= 25))
+            {
+                NoNegatives[NoNegatives:count()+1, normal] = V
+            }
+        }
+        return NoNegatives
+    }
+    
+    # Function used to rotate the board 90 degrees clockwise
+    function void rotateBoard(A:array)
+    {
+        foreach(K, I:number = A)
+        {
+            local Xpos = (EGP:egpPos(I)[1]-10)/102
+            local Ypos = (EGP:egpPos(I)[2]-10)/102
+            EGP:egpPos(I, vec2(((4-Ypos)*102)+10, (Xpos*102)+10))
+            EGP:egpPos(I+26, vec2(((4-Ypos)*102)+20, (Xpos*102)+10))
+        }
+        
+    }
+    
+    AllTiles = array(1,2,3,4,5,
+                     6,7,8,9,10,
+                     11,12,13,14,15,
+                     16,17,18,19,20,
+                     21,22,23,24,25)
+    Selection = array()
+    FoundWords = array()
+    CurUser = owner()
+    Checking = 0
+    Score = 0
+    RetString = ""
+    
+    NeedFile = 1
+    ValidWords = ""
+    timer("start-transfer", 250)
+
+
+    WordDisplay:egpClear()
+    WordDisplay:egpText(999, "Score: "+Score, vec2(412, 472))
+    EGP:egpClear()
+    runOnHTTP(1)
+}
+
+Cursor = EGP:egpCursor(CurUser)
+Use = CurUser:keyUse() &(Cursor != vec2(-1, -1))
+# Builds the array of letters
+if(Use)
+{
+    local Chk = array()
+    # Checks every square to see if you're selecting it
+    if(Selection:count() > 0)
+    {
+        Chk = aroundGrid(Selection[Selection:count(), number])
+    }
+    else
+    {
+        Chk = AllTiles
+    }
+       
+    foreach(K, I:number = Chk)
+    {
+        # If you haven't already selected it..
+        if(!Selection:containsNum(I))
+        {
+            # Check if your cursor is inside of it
+            if(inrange(Cursor, EGP:egpPos(I), EGP:egpPos(I)+EGP:egpSize(I)))
+            {
+                # Add it to the Selection and color it red
+                Selection[Selection:count()+1, normal] = I
+                EGP:egpColor(I, vec(255, 0, 0))
+                break
+            }
+        }
+    }  
+}
+
+# As soon as you let go of the Use key
+if($Use == -1)
+{
+    RetString = ""
+    # Build the word
+    foreach(K, V:normal = Selection)
+    {
+        RetString = RetString + LettersLookup[V, string]
+    }
+    
+    # Check if you've already found it
+    if(!FoundWords:containsString(RetString))
+    {
+        # Checks to make sure it's 3 characters or longer
+        if(RetString:length() >= 3)
+        {
+            if(ValidWords:find(" "+RetString:lower()+" ") != 0)
+            {
+                FoundWords[FoundWords:count()+1, string] = RetString
+                Score += RetString:length()
+                WordDisplay:egpSetText(999, "Score: "+Score)
+                updateWordBoard()
+                clearBoard()
+                Selection = array()
+            }
+            else
+            {
+                hint("Not a valid word!", 3)
+                clearBoard()
+                Selection = array()
+            }
+        }
+        else
+        {
+            hint("Not long enough!", 3)
+            clearBoard()
+            Selection = array()
+        }
+    }
+    else
+    {
+        # Can't find the same word twice
+        hint("You've already found that word!", 3)
+        clearBoard()
+        Selection = array()
+    }
+
+}
+
+if(chatClk(owner()))
+{
+    if(lastSaid() == "!rotate")
+    {
+        rotateBoard(AllTiles)
+    }
+}
+# Getting the file
+if(NeedFile)
+{
+    EGP:egpText(1, "LOADING", vec2(200, 240))
+    # Starting the file transfer
+    if(clk("start-transfer"))
+    {
+        # Check to make sure we can request
+        if(httpCanRequest())
+        {
+            httpRequest(DictLink)
+        }
+        
+        # Otherwise try again in 250ms
+        else
+        {
+            timer("start-transfer", 250)
+        }
+    }
+    
+    # If the file transfer finishes
+    if(httpClk())
+    {
+        ValidWords = httpData():replace("\n", " ")
+        NeedFile = 0
+        EGP:egpRemove(1)
+        genBoard()
+    }
+}
+Ops = ops()
+interval(50)

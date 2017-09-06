@@ -1,0 +1,75 @@
+@name James the Strider
+@inputs
+@outputs 
+@persist R 
+@trigger  
+@model models/Combine_Strider.mdl
+#models/Combine_Strider.mdl
+interval(20000)
+runOnChat(1)
+
+findByClass("player")
+findToArray()
+Player = findClosest(entity():pos())
+#################################################################
+#Sound Effects
+#################################################################
+
+#Starting Sound
+if (first() | duped())
+{
+soundPlay(6,0,"/ambient/hallow01.wav")
+}
+
+R=randint(1,8)
+round(R)
+if (R == 1)
+{
+SoundPlay = "/ambient/hallow02.wav"
+}
+if (R == 2)
+{
+SoundPlay="/ambient/hallow03.wav"
+}
+if (R == 3)
+{
+SoundPlay="/ambient/hallow04.wav"
+}
+if (R == 4)
+{   
+SoundPlay="/ambient/hallow05.wav"
+}
+if (R == 6)
+{
+SsoundPlay="/ambient/hallow06.wav"
+}
+if (R == 7)
+{
+SoundPlay="/ambient/hallow07.wav"
+}
+if (R == 8)
+{
+SoundPlay="/ambient/hallow08.wav"
+}
+
+if(Player:pos():distance(entity():pos()) > 50)
+{
+    soundPlay(1,0,SoundPlay)
+}
+#################################################################
+#END of Sound Effets
+#################################################################
+
+
+
+
+
+
+
+
+#################################################################
+#Weapon Control Structure
+#Cannon
+#Sound: 
+#Effect:
+#################################################################

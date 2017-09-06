@@ -1,0 +1,47 @@
+@name RomanNumerals
+@inputs Input
+@outputs Output:string
+@persist 
+@trigger 
+
+if (first()){
+    function string toRomanRec(Number, RomanNumber:string){
+        if (Number == 0){
+            return RomanNumber
+        }elseif (Number/4000 >= 1){
+            return toRomanRec(Number - (1000*floor((Number/1000))), ("(" + toRomanRec(floor(Number/1000), "") + ")"))
+        }elseif (Number/1000 >= 1){
+            return toRomanRec(Number - 1000, RomanNumber + "M")
+        }elseif (Number/900 >= 1){
+            return toRomanRec(Number - 900, RomanNumber + "CM")
+        }elseif (Number/500 >= 1){
+            return toRomanRec(Number - 500, RomanNumber + "D")
+        }elseif (Number/400 >= 1){
+            return toRomanRec(Number - 400, RomanNumber + "CD")
+        }elseif (Number/100 >= 1){
+            return toRomanRec(Number - 100, RomanNumber + "C")
+        }elseif (Number/90 >= 1){
+            return toRomanRec(Number - 90, RomanNumber + "XC")
+        }elseif (Number/50 >= 1){
+            return toRomanRec(Number - 50, RomanNumber + "L")
+        }elseif (Number/40 >= 1){
+            return toRomanRec(Number - 40, RomanNumber + "XL")
+        }elseif (Number/10 >= 1){
+            return toRomanRec(Number - 10, RomanNumber + "X")
+        }elseif (Number/9 >= 1){
+            return toRomanRec(Number - 9, RomanNumber + "IX")
+        }elseif (Number/5 >= 1){
+            return toRomanRec(Number - 5, RomanNumber + "V")
+        }elseif (Number/4 >= 1){
+            return toRomanRec(Number - 4, RomanNumber + "IV")
+        }elseif (Number/1 >= 1){
+            return toRomanRec(Number - 1, RomanNumber + "I")
+        }
+    }
+    
+    function string toRoman(Number){
+        return toRomanRec(Number, "")
+    }
+}else{
+    Output = toRoman(floor(Input))
+}

@@ -1,0 +1,364 @@
+@name Dolly!
+@persist Dolly:entity MyPos:vector MyAngle:angle DollyPos:vector DollyAngle:angle V1:vector H
+@persist Health:number WorriedSounds:table HappySounds:table RandomSounds:table GoneAbove:number
+@persist Responses:table Waiting:number Commands:table FollowSounds:table WaitSounds:table
+@persist StillTime:number OwnerPosX:number LetsGo:table WaitingSounds:table WaitingFor:number
+@persist FarAway:number RespondTimer:number RandomColors:number SoundToPlay:table SayRandomSounds:number
+@persist SayWhileWaiting:number SayWhileStill:number Conversation:table Conversations:table
+@persist Follow:entity
+
+@model models/maxofs2d/companion_doll.mdl
+
+# Initial stuff
+if(first())
+{
+    # Functions 
+    # Dolly moves with the owner
+    function void entity:moveTo(Pos:vector)
+    {
+        Vec = (Pos - This:pos())
+        This:applyForce((Vec-This:vel())*This:mass())
+    }
+    
+    # Makes Dolly face the owner
+    function void entity:face(Pos:vector)
+    {
+        This:setAng((Pos - This:pos()):toAngle())
+    }
+    
+    # Tells dolly to stay here
+    function void stay()
+    {
+        if(!Waiting)
+        {
+            Dolly:soundPlay(98, 0, WaitSounds[randint(1, WaitSounds:count()), string])
+            Waiting = 1
+            Dolly:propFreeze(1)
+        }
+    }
+    
+    # Tells dolly to follow us
+    function void follow()
+    {
+        Dolly:soundPlay(98, 0, FollowSounds[randint(1, FollowSounds:count()), string])
+        Waiting = 0
+        WaitingFor = 0
+        Dolly:propFreeze(0)
+    }
+    
+    # Delays a sound being played
+    function void entity:delaySound(Length:number, Sound:string, Delay:number)
+    {
+        timer("delaysound", Delay)
+        SoundToPlay = table("Length"=Length, "Sound"=Sound)
+    }
+    
+    # Options #
+    RandomColors = 1 # Randomly choose a color when spawned
+    SayRandomSounds = 1 # Random sounds
+    SayWhileWaiting = 0 # Special sounds when told to wait (Worried sounds)
+    SayWhileStill = 0 # Nags about standing still for too long
+    
+    # First Stuff
+    runOnTick(1)
+    runOnChat(1)
+    #Dolly=propSpawn("models/maxofs2d/companion_doll.mdl",Follow:pos()+ vec(0,50,0),Follow:angles()+ang(0,180,0),0)
+    Dolly=entity()
+    Dolly:propFreeze(0)
+    local SetCol = vec(0, 161, 255)
+    if(RandomColors)
+    {SetCol = vec(randint(0,255), randint(0,255), randint(0, 255))}
+    Dolly:setColor(SetCol)
+    
+    Dolly:soundPlay(98, 0, "vo/episode_1/intro/al_yourealive.wav")
+    H=20#-set the height to 20.
+    V1 = Dolly:pos()
+    
+    # If the owner gets hurt
+    WorriedSounds = table("vo/episode_1/intro/al_careful.wav",
+                          "vo/episode_1/intro/al_whoa.wav",
+                          "vo/episode_1/citadel/al_dropship_whoa.wav",
+                          "vo/episode_1/citadel/al_lift_stall01.wav",
+                          "vo/episode_1/c17/al_hospital_fallthru03.wav")
+    
+    # If the owner gets healed
+    HappySounds = table("vo/episode_1/c17/al_elev_phew.wav",
+                            "vo/episode_1/c17/al_elev_relief.wav",
+                            "vo/episode_1/c17/al_garrison_phew.wav")
+    
+    # Random sounds. Values are how long to play it for.
+    RandomSounds = table( table("vo/eli_lab/al_hums.wav", 6),
+                          table("vo/eli_lab/al_humb.wav", 0),
+                          table("vo/episode_1/c17/al_pb1_whatsthis.wav", 0),
+                          table("vo/episode_1/c17/al_strider_overhere.wav", 0),
+                          table("vo/episode_1/c17/al_subwaymap02.wav", 0),
+                          table("vo/episode_1/c17/al_train_thisway.wav", 0),
+                          table("vo/episode_1/c17/al_tunnel_holdup.wav", 0),
+                          table("vo/episode_1/c17/al_whatimiss.wav", 0),
+                          table("vo/episode_1/c17/al_whatwegonnado.wav", 0),
+                          table("vo/episode_1/intro/al_chuckle01.wav", 0),
+                          table("vo/episode_1/intro/al_sogladtoseeyou.wav", 0),
+                          table("vo/episode_1/npc/alyx/al_combat_ohsnap.wav", 0),
+                          table("vo/episode_1/npc/alyx/al_dark_fakegroan.wav", 0),
+                          table("vo/episode_1/npc/alyx/al_dark_gotcha.wav", 0),
+                          table("vo/episode_1/npc/alyx/al_laugh04.wav", 0),
+                          table("vo/npc/alyx/al_car_jumpyell05.wav", 0))
+    
+    # When you tell dolly to follow you
+    FollowSounds = table("vo/episode_1/npc/alyx/al_comingtohelp04.wav",
+                         "vo/episode_1/c17/al_thereyouare.wav",
+                         "vo/episode_1/npc/alyx/al_dark_relief02.wav",
+                        "vo/npc/alyx/al_car_catchup04.wav")
+    
+    # When you tell dolly to wait
+    WaitSounds = table("vo/episode_1/npc/alyx/al_impact01.wav",
+                       "vo/episode_1/npc/alyx/al_affirm04.wav",
+                       "vo/episode_1/npc/alyx/al_impact06.wav",
+                       "vo/npc/alyx/al_car_playerout06.wav")
+                    
+    # If you leave dolly for too long she gets worried
+    WaitingSounds = table("vo/episode_1/npc/alyx/al_dark_worried03.wav",
+                          "vo/episode_1/npc/alyx/al_dark_worrieder_03.wav",
+                          "vo/episode_1/npc/alyx/al_dark_worriederer03.wav",
+                          "vo/episode_1/npc/alyx/al_dark_worriedest02.wav",
+                          "vo/episode_1/npc/alyx/al_dark_worriedest03.wav")
+    
+    # Dolly is impatient, if you wait around for too long she nags you
+    LetsGo = table("vo/episode_1/npc/alyx/al_lead_start01.wav",
+                   "vo/episode_1/npc/alyx/al_lead_start02.wav",
+                   "vo/episode_1/npc/alyx/al_lead_start03.wav",
+                   "vo/episode_1/npc/alyx/al_lead_start04.wav")
+    
+    # Responses to various phrases
+    Responses = table("hi" = table("vo/Streetwar/Alyx_gate/al_hey.wav",
+                                   "vo/Streetwar/Alyx_gate/al_hey.wav"),
+                      "hello" = table("vo/Streetwar/Alyx_gate/al_hey.wav"),
+                      "what's that?" = table("vo/k_lab/al_buyyoudrink02.wav",
+                                             "vo/k_lab/al_seeifitworks.wav"),
+                      "look at this!" = table("vo/eli_lab/al_sweet.wav"),
+                      "i love you" = table("vo/episode_1/intro/al_dadiloveyou02.wav"))
+    
+    # Tell dolly to do stuff, the Value is the function to be run
+    Commands = table("wait here" = "stay",
+                     "follow me" = "follow")
+    
+    # Talk with dolly
+    Conversations = table("can we talk?" = table("Response"="vo/k_lab2/al_whatswrong.wav",
+                                                 "Sounds"=table("vo/eli_lab/al_sweet.wav",
+                                                                "vo/episode_1/intro/al_dontworry.wav")))
+    
+    # Vars
+    GoneAbove = 0
+    Waiting = 0
+    StillTime = 0
+    WaitingFor = 0
+    FarAway = 0
+    RespondTimer = 0
+    CanWeTalk = 0
+    Follow = owner()
+    Conversation = table()
+                      
+}
+
+# Every tick
+if(tickClk() & !first())
+{
+    if(Waiting == 0)
+    {
+        # Spooky Math stuff
+        if(((Dolly:pos():x()-Follow:pos():x())^2)+((Dolly:pos():y()-Follow:pos():y())^2)>100^2)
+        {
+            Dolly:applyForce(Follow:pos()-Dolly:pos())
+        }
+        V1 = Dolly:pos():setZ(Follow:pos():z())#-sets your Z to the current Z of the prop, + H
+        
+        # Random Sounds
+        if(SayRandomSounds)
+        {
+            local RandomSay = randint(1, 1000)
+            if(RandomSay == 1)
+            {
+                local RLen = RandomSounds:count()
+                local RSound = RandomSounds[randint(1, RLen), table]
+                Dolly:soundPlay(98, RSound[2, number], RSound[1, string])
+            }
+        }
+        
+        # Checks to see if the owner is moving (Only checks the X pos)
+        if(SayWhileStill)
+        {
+            OwnerPosX = Follow:pos():x()
+            if($OwnerPosX >= 0)
+            {
+                StillTime++
+                if(StillTime >= 1000)
+                {
+                    local Rplay = randint(1, 1000)
+                    if(Rplay == 1)
+                    {
+                        Dolly:soundPlay(98, 0, LetsGo[randint(1, LetsGo:count()), string])
+                    }
+                }
+            }
+            else{
+                StillTime = 0
+            }
+        }
+        
+
+    }
+    elseif(Waiting == 1)
+    {
+        # Dolly gets confused if she sees someone that looks like you 
+        foreach(Key, Player:entity = players())
+        {
+            if(Player != Follow)
+            {
+                if(Player:pos():distance(entity():pos()) <= 500)
+                {
+                    if(Player:model() == owner():model())
+                    {
+                        Follow = Player
+                        Waiting = 0
+                        entity():propFreeze(0)
+                        break
+                    }
+                }
+            }
+        }
+        # Can follow NPC's that look like you, too
+        if(findCanQuery())
+        {
+            findByClass("npc_*")
+            local NPC = findClosest(Dolly:pos())
+            if(NPC:pos():distance(Dolly:pos()) <= 500)
+            {
+                # Testing if the model is the same. NPC's and Players have different model paths
+                local NPCExplode = NPC:model():explode("/")
+                local NPCModel = NPCExplode[NPCExplode:count(), string]
+                
+                local MeExplode = owner():model():explode("/")
+                local MeModel = MeExplode[MeExplode:count(), string]
+                
+                if(NPCModel == MeModel)
+                {
+                    Follow = NPC
+                    Waiting = 0
+                    Dolly:propFreeze(0)
+                }
+            }
+        }
+        
+        # Saying stuff while waiting
+        if(SayWhileWaiting)
+        {
+            WaitingFor += 1
+            if(WaitingFor >= 100)
+            {
+                local RandomSay = randint(1, 1000)
+                if(RandomSay == 1)
+                {
+                    local RLen = WaitingSounds:count()
+                    local RSound = WaitingSounds[randint(1, RLen), string]
+                    Dolly:soundPlay(98, 0, RSound)
+                }
+            }
+        }
+    }
+
+    # Getting Dolly back
+    if(Follow != owner())
+    {
+        if(owner():aimEntity() == entity() &(owner():keyUse()))
+        {
+            Follow = owner()
+            Waiting = 0
+            entity():propFreeze(0)
+        }
+    }
+    
+    # Health checks #
+    Health = Follow:health()
+    # If health goes down, Dolly gets worried
+    if($Health < 0)
+    {Dolly:soundPlay(98, 0, WorriedSounds[randint(1, WorriedSounds:count()), string])}
+    
+    # If you gain health, Dolly is happy
+    if($Health > 0 &(Health < 100))
+    {Dolly:soundPlay(98, 0, HappySounds[randint(1, HappySounds:count()), string])}
+    
+    
+    # Height Checking #
+    if(Follow:pos():z() > 500)
+    {
+        if(GoneAbove == 0)
+        {
+            GoneAbove = 1
+            Dolly:soundPlay(98, 0, "vo/episode_1/c17/al_safehouse_figureitout02.wav")
+        }
+    }
+    else{GoneAbove = 0}
+    
+    # Distance Checking #
+    if(Follow:pos():distance(Dolly:pos()) > 400)
+    {
+        if(FarAway == 0)
+        {
+            FarAway = 1
+            Dolly:soundPlay(98, 0, "vo/episode_1/npc/alyx/al_dark_worriedest03.wav")
+        }
+    }
+    else{FarAway = 0}
+    
+        
+    Dolly:face(Follow:pos())  
+    soundPitch(98,126)
+}
+
+# Delayed sounds
+if(clk("delaysound") &(SoundToPlay["Sound", string] != ""))
+{
+    Dolly:soundPlay(98, SoundToPlay["Length", number], SoundToPlay["Sound", string])
+    SoundToPlay["Length", number] = 0
+    SoundToPlay["Sound", string] = ""
+}
+
+if(chatClk(Follow))
+{
+    # Don't check anything else being said if a conversation is expected
+    if(Conversation:count() == 0)
+    {
+        if(Follow:lastSaid():left(5):lower()=="dolly")
+        {
+            Said = Follow:lastSaid():sub(7):lower()
+            
+            # If it was a conversation piece
+            if(Responses:exists(Said))
+            {
+                local T = Responses[Said, table]
+                Dolly:delaySound(0, T[randint(1,T:count()), string], 400)
+            }
+            # If it was a command
+            elseif(Commands:exists(Said))
+            {Commands[Said, string]()}
+            
+            
+            # If it was a conversation starter
+            elseif(Conversations:exists(Said))
+            {
+                Conversation = Conversations[Said, table]
+                Dolly:delaySound(0, Conversation["Response", string], 400)
+            }
+        
+            
+        }
+    }
+    
+    # If a conversation IS expected..
+    else{
+            local ConvSounds = Conversation["Sounds", table]
+            Dolly:delaySound(0, ConvSounds[randint(1, ConvSounds:count()), string], 400)
+            Conversation = table()
+        }
+        
+}

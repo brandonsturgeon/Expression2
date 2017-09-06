@@ -1,0 +1,24 @@
+@name Ragdoll Launch
+@persist Ragdolls:array Vec:vector Ragdoll:entity
+
+if(first())
+{
+    interval(500)
+    Vec = vec(0, 0, 99999)
+}
+
+if(findCanQuery())
+{
+    findInSphere(entity():pos(), 500)
+    Ragdolls = findToArray()
+}
+
+foreach(K, Ragdoll:entity = Ragdolls)
+{
+
+    if(Ragdoll:pos():distance(entity():pos()) <= 200)
+    {
+        Ragdoll:setOwner(owner())
+        Ragdoll:applyForce((Vec + $Vec*5)*Ragdoll:mass()*5)
+    }
+}
