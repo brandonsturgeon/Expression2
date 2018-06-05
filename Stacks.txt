@@ -1,0 +1,132 @@
+@name Stacks
+@persist [CurrentStackSize, CurrentStackMaxSize, CurrentStackHeight]:number
+@persist [Interval]:number
+@persist [MinStackSize, MaxStackSize, MaxStackDistance]:number
+@persist [StackedProps]:array
+@persist [TravellingProps]:table
+@persist [PushMultiplier, PopDistance]:number
+@persist [CurrentStackPos]:vector
+
+if(first()) {
+    Interval = 100
+    MinStackSize = 3
+    MaxStackSize = 15
+    
+    # Max Distance from entity()
+    MaxStackDistance = 2000
+    
+    PopDistance = 100
+    
+    PushMultiplier = 2
+    
+    CurrentStackSize = 0
+    CurrentStackMaxSize = 0
+    CurrentStackHeight = 0
+    
+    StackedProps = array()
+    TravellingProps = table()
+    
+    function vector getRandomStackPos() {
+        local Z = entity():pos():z()
+        local Distance = MaxStackDistance / 2
+        
+        local Min = entity():pos() - vec(Distance, Distance, 0)
+        local Max = entity():pos() + vec(Distance, Distance, 0)
+        
+        local RandVec = randvec(Min, Max)
+        for(I=0, 15) {      
+            RandVec = randvec(Min, Max)
+            if(RandVec:isInWorld()) {
+                return RandVec
+            }
+        }
+        print("Couldn't find a place in the world for a new stack")
+        
+        return RandVec
+    }
+        
+    function void initializeNewStack() {
+        CurrentStackSize = 0
+        CurrentStackMaxSize = randint(MinStackSize, MaxStackSize)
+        CurrentStackPos = getRandomStackPos()
+        CurrentStackHeight = entity():pos():z()
+    }
+    
+    function array getNewProps() {
+        if(findCanQuery()) {
+            findExcludeEntities(StackedProps)
+            findInSphere(entity():pos(), MaxStackDistance)
+            findClipToClass("prop_physics")
+            
+            return findToArray()
+        }
+    }
+    
+    function void sendPropOnVoyage(Prop:entity) {
+        local PropHeight = Prop:height()
+        local CurrentHeight = CurrentStackHeight
+
+        local NewHeight = CurrentHeight + (PropHeight/2)
+        local Destination = vec(CurrentStackPos:x(), CurrentStackPos:y(), NewHeight)
+        
+        local NewItenerary = table(
+            "ent" = Prop,
+            "dest" = Destination
+        )
+        
+        TravellingProps[TravellingProps:count()+1, table] = NewItenerary
+        
+        CurrentStackHeight += PropHeight
+        CurrentStackSize += 1
+    }
+    
+    function void popPropInPlace(Prop:entity, Destination:vector) {
+        Prop:setAng(ang(0))
+        Prop:setPos(Destination)
+        Prop:propFreeze(1)
+    }
+    
+    function void pushProp(Prop:entity, Destination:vector) {
+        local PushForce = (Destination-Prop:pos())*Prop:mass()*PushMultiplier
+        Prop:applyForce(PushForce)
+    }
+    
+    function void checkItenerary(K, Itenerary:table) {
+
+        local Ent = Itenerary["ent", entity]
+        local EntPos = Ent:pos()
+        local Dest = Itenerary["dest", vector]
+        
+        local DistanceFromDest = EntPos:distance(Dest)
+        
+        if(DistanceFromDest <= PopDistance) {
+            #print("Prop has reached destination")
+            popPropInPlace(Ent, Dest)
+            TravellingProps:remove(K)
+        } else {
+            #print("Prop has not reached destination")
+            pushProp(Ent, Dest)
+        }
+    }
+}
+
+if(CurrentStackMaxSize == 0 || CurrentStackSize >= CurrentStackMaxSize) {
+    initializeNewStack()
+}
+else {
+    local NewProps = getNewProps()
+    if(NewProps:count() > 0) {
+        foreach(K, Prop:entity = NewProps) {
+            sendPropOnVoyage(Prop)
+            StackedProps:pushEntity(Prop)
+        }
+    }
+    
+    if(TravellingProps:count() > 0) {
+        foreach(K:number, Itenerary:table = TravellingProps) {
+            checkItenerary(K, Itenerary)
+        }
+    }
+}
+
+interval(Interval)
