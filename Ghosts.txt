@@ -1,0 +1,95 @@
+@name Ghosts
+@persist [Reaper,GhostCounter,RaiseAmount]:number
+@persist [Ghosts]:table
+@persist [PlayerAliveStatus]:array
+
+
+if(first())
+{
+    RaiseAmount = 300
+    Reaper = 1
+    GhostCounter = 2    
+    Ghosts = table()
+    
+    PlayerAliveStatus = array()
+    
+    function void createGhost(Ply:entity)
+    {
+        GhostCounter += 1
+        holoCreate(GhostCounter)
+        holoSkin(GhostCounter, Ply:getSkin())
+        holoModel(GhostCounter, Ply:model())
+        holoColor(GhostCounter, Ply:getColor())
+        
+        Alpha = Ply:getAlpha()*0.8
+        holoAlpha(GhostCounter, Alpha)
+        
+        holoAng(GhostCounter, Ply:angles()) 
+        holoPos(GhostCounter, Ply:pos())
+        #holoAnim(GhostCounter, "gmod_breath_noclip_layer")
+        
+        local Struct = table(
+            "index" = GhostCounter,
+            "ent" = holoEntity(GhostCounter),
+            "starting-z" = Ply:pos()[3],
+            "starting-alpha" = Alpha
+        )
+        
+        Ghosts:pushTable(Struct)
+    }
+    
+    function void raiseGhosts()
+    {
+        for(I=1, Ghosts:count())
+        {
+            Ghost = Ghosts[I, table]
+            
+            local Index = Ghost["index", number]
+            local Ent = Ghost["ent", entity]
+            local StartingZ = Ghost["starting-z", number]
+            local StartingAlpha = Ghost["starting-alpha", number]
+            
+            local CurrentZ = Ent:pos()[3]
+            local CurrentAlpha = Ent:getAlpha()
+            
+            local AlphaDelta = (StartingAlpha / RaiseAmount)
+            
+            local Travelled = CurrentZ - StartingZ
+            
+            if(Travelled <= RaiseAmount)
+            {
+                holoPos(Index, Ent:pos() + vec(0,0,1))
+                holoAlpha(Index, CurrentAlpha - AlphaDelta)
+            }
+            else
+            {
+                holoDelete(Index)
+                Ghosts:removeTable(1)
+            }
+            
+        }
+    }
+}
+
+foreach(K, Ply:entity = players())
+{
+    local Alive = Ply:isAlive()
+    local ID = Ply:steamID64():toNumber()
+    if(PlayerAliveStatus:exists(ID))
+    {
+        local LastAliveStatus = PlayerAliveStatus[ID, number]
+        
+        if(Alive - LastAliveStatus == -1)
+        {
+            createGhost(Ply)
+        }
+    }
+    
+    PlayerAliveStatus[ID, number] = Alive
+}
+
+raiseGhosts()
+
+
+
+interval(25)
