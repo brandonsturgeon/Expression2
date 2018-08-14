@@ -1,0 +1,33 @@
+@name Intercept
+@persist E:entity
+
+
+
+if(first())
+{
+    E = propSpawn("models/hunter/blocks/cube1x1x1.mdl", 1)
+    E:setMass(999999)
+    E:setAlpha(0)
+    
+    runOnTick(1)
+}
+
+if(findCanQuery())
+{
+    #findByModel("models/weapons/ar2_grenade.mdl")
+    findByClass("rpg_missile")
+    #findByClass("grenade_ar2")
+    
+    #findByModel("models/crossbow_bolt.mdl")
+    
+    findToArray()
+    Target = findClosest(entity():pos())
+    if(Target:isValid())
+    {
+        E:setPos(Target:pos()+(Target:forward()*50))
+        E:setAng(ang(0,0,0))
+    }
+}
+
+
+
