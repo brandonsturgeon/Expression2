@@ -1,5 +1,5 @@
 @name Carl The Carpenter - Saving Module
-@persist SaveStep StartedUpload
+@persist SaveStep StartedUpload DataIsPopulated
 @persist DataTable:table
 
 if(first())
@@ -7,25 +7,42 @@ if(first())
     DataTable = table()
     SaveStep = 1
     StartedUpload = 0
+    DataIsPopulated = 0
     
-    runOnFile(1)
+
+    
+    function vector roundVec(V:vector) {
+        local X = round(V:x(), 2)
+        local Y = round(V:y(), 2)
+        local Z = round(V:z(), 2)
+        
+        return vec(X, Y, Z)
+    }
+    
+    function angle roundAng(V:angle) {
+        local X = round(V:pitch(), 2)
+        local Y = round(V:yaw(), 2)
+        local Z = round(V:roll(), 2)
+        
+        return ang(X, Y, Z)
+    }
     
     function table extractPropData(P:entity)
     {
+        print(P:getMaterials()[1, string])
         local PropData = table("Model" = P:model(),
                                "Color" = P:getColor(),
-                               "Material" = P:getMaterial(),
-                                 # We take this *2 because they're /2 when ghosted while saving
+                               "Material" = P:getMaterials()[1, string],
+                               # We take this *2 because they're /2 when ghosted while saving
                                "Alpha" = P:getAlpha()*2,
-                               "Angles" = entity():toLocal(P:angles()),
-                               "Pos" = entity():toLocal(P:pos()))
+                               "Angles" = roundAng(entity():toLocal(P:angles())),
+                               "Pos" = roundVec(entity():toLocal(P:pos())))
                             
         return PropData
     }
     
-    # Returns 1 or 0 depending on if it's finished
-    function number saveSelectionToFile(Selection:array, Name:string)
-    {   
+    function number populateDataTable(Selection:array)
+    {
         for(I=SaveStep, Selection:count())
         {
             SaveStep = I
@@ -37,38 +54,56 @@ if(first())
             }
             
             local Prop = Selection[I, entity]
+            print("Extracting data for: " + Prop:model())
             local GetData = extractPropData(Prop)
             
             # Append this prop's data to the DataTable
             DataTable:pushTable(GetData)
-            
-
         }
         
-        # Try to do the actual writing
-        if(fileCanWrite())
+        return 1
+    }
+    
+    # Returns 1 or 0 depending on if it's finished
+    function number saveSelectionToFile(Selection:array, Name:string)
+    {
+        if(DataIsPopulated == 0)
         {
-            if(StartedUpload == 0)
-            {
-                StartedUpload = 1
-                print("Saving file...")
-                
-                local SaveName = Name + ".txt"
-                local EncodedDataTable = vonEncode(DataTable)
-                fileWrite(SaveName, EncodedDataTable)
-            }
-
-
+            DataIsPopulated = populateDataTable(Selection)
         }
         else
         {
-            print("Unable to write file: " + Name + ".txt will try again...")
-        }
-        
-        if(fileClk())
-        {
-            print("Finished uploading")
-            return 1
+            # Try to do the actual writing
+            if(StartedUpload == 0)
+            {
+                if(fileCanWrite())
+                {
+                    StartedUpload = 1
+                    print("Saving file...")
+                    
+                    local SaveName = Name + ".txt"
+                    local EncodedDataTable = vonEncode(DataTable)
+                    fileWrite(SaveName, EncodedDataTable)
+                    printColorC(EncodedDataTable)
+                }
+                
+                else
+                {
+                    print("Unable to write file: " + Name + ".txt will try again...")
+                }
+    
+            }
+            else {
+                print("Waiting")
+            }
+            
+            if(fileClk())
+            {
+                print("Finished saving")
+                return 1
+            }
+            
+            return 0
         }
         
         return 0
