@@ -58,11 +58,13 @@ if(first())
     {
         if(LastProp != noentity())
         {
-            beamSetOriginParent(entity())
-            beamPoint(1, entity())
-            beamPoint(2, LastProp)
+            print("Setting beams")
             
-            beamColor(vec(255,0,0))
+            beamSetOriginParent(entity())
+            beamPoint(1, entity():pos())
+            beamPoint(2, LastProp:pos())
+            beamSetOriginParent(entity())
+            
             beamColor(1, vec(255,0,0))
             beamColor(2, vec(255,0,0))
         }
@@ -90,12 +92,10 @@ if(first())
             
             local Prop = propSpawn(Model, 1)
             
-            setBeams()
-            
             SaveBuiltProps:pushEntity(Prop)
 
             # Modify prop
-            Prop:setModel(Model)
+            #Prop:setModel(Model)
             Prop:setColor(vec(255,0,0))
             Prop:setMaterial("models/wireframe")
             Prop:setAlpha(Alpha)
@@ -104,6 +104,8 @@ if(first())
             # Sets global LastProp vars
             LastProp = Prop
             LastPropData = Data
+            
+            setBeams()
             
             return 1
         }

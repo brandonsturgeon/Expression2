@@ -27,7 +27,7 @@ if(first())
     
     # This function should never be run if Status != "Waiting"
     # This should always be what the Owner says
-    function string parseCommand()
+    function void parseCommand()
     {
         local LastSaid = lastSaid()
         local Split = LastSaid:explode(" ")
@@ -172,6 +172,7 @@ if(first())
     
     # Run On's
     runOnChat(1)
+    runOnFile(1)
     
     print("CarlTheCarpenter - Core Loaded")
 }
